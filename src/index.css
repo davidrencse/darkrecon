@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --bg: #080808;
+  --fg: #e8e8e8;
+  --muted: #737373;
+  --line: rgba(255, 255, 255, 0.06);
+  --card: #0f0f0f;
+  --card-hover: #141414;
+  --uk-accent: #6b7f8f;
+  --uk-accent-dim: rgba(107, 127, 143, 0.35);
+  --uk-accent-surface: rgba(107, 127, 143, 0.1);
+  --uk-accent-border: rgba(107, 127, 143, 0.45);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+details > summary.flag-section-summary {
+  list-style: none;
+}
+
+details > summary.flag-section-summary::-webkit-details-marker {
+  display: none;
+}
