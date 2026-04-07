@@ -107,7 +107,9 @@ function proxyBirthNote(p: CountryWideRow): string {
 }
 
 /**
- * Merges main Data360 row with optional `countries_proxy_demographics_births.csv` row.
+ * Builds dashboard tiles from a main country row plus optional proxy demographics row.
+ * Proxy data may come from `countries_proxy_demographics_births.csv` **or** from merged `proxy_*` columns in
+ * `centralized_merged_country_stats.csv` (see `proxyFromMergedRow`).
  * UK (GBR): white (native) birth rate stays **54% (2024)** per dashboard spec; immigrant birth from proxy when present.
  */
 export function wideRowToStatMetrics(

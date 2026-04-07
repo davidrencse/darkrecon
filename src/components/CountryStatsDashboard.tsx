@@ -1,20 +1,15 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { FlagEntry } from '../types/flag';
 import type { CountryStatMetric } from '../types/countryStats';
-import { wideRowToStatMetrics } from '../lib/countryStatsMetrics';
+import { collectSourceUrlsFromWideRow, wideRowToStatMetrics } from '../lib/countryStatsMetrics';
+import { crimeFromMergedRow, proxyFromMergedRow } from '../lib/mergedCountryStats';
 import type { CountryWideRow } from '../lib/parseCountriesWideCsv';
-import { findCrimeRow } from '../lib/crimeCountryLookup';
-import {
-  indexCountriesByCountryCode,
-  indexCountriesByIso3,
-  parseCountriesWideCsv,
-} from '../lib/parseCountriesWideCsv';
+import { indexCountriesByIso3, parseCountriesWideCsv } from '../lib/parseCountriesWideCsv';
 import { collectCrimeSourceUrls, CrimeMetricsSection } from './CrimeMetricsSection';
 import { CollapsibleFlagSection } from './CollapsibleFlagSection';
 
-const CSV_URL = '/data/countries_screenshot_stats_latest.csv';
-const PROXY_CSV_URL = '/data/countries_proxy_demographics_births.csv';
-const CRIME_CSV_URL = '/data/countries_crime_2000s_latest.csv';
+const MERGED_CSV_URL = '/data/centralized_merged_country_stats.csv';
+const CRIME_AUDIT_CSV_URL = '/data/crime_baseline_replacement_audit.csv';
 
 const METRIC_ORDER = [
   'GDP',
@@ -289,6 +284,7 @@ type CountryStatsDashboardProps = {
 
 export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashboardProps) {
   const [ordered, setOrdered] = useState<CountryStatMetric[] | null>(null);
+  const [statsRow, setStatsRow] = useState<CountryWideRow | null>(null);
   const [datasetNote, setDatasetNote] = useState('');
   const [proxyDatasetNote, setProxyDatasetNote] = useState('');
   const [crimeRow, setCrimeRow] = useState<CountryWideRow | null>(null);
@@ -298,47 +294,35 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
     let cancelled = false;
     (async () => {
       try {
-        const [mainRes, proxyRes, crimeRes] = await Promise.all([
-          fetch(CSV_URL),
-          fetch(PROXY_CSV_URL),
-          fetch(CRIME_CSV_URL),
-        ]);
-        if (!mainRes.ok) throw new Error(`Could not load main data (${mainRes.status})`);
-        const mainText = await mainRes.text();
-        const parsedMain = parseCountriesWideCsv(mainText);
-        const byIso = indexCountriesByIso3(parsedMain);
+        const mergedRes = await fetch(MERGED_CSV_URL);
+        if (!mergedRes.ok) throw new Error(`Could not load merged country data (${mergedRes.status})`);
+        const mergedText = await mergedRes.text();
+        const parsedMerged = parseCountriesWideCsv(mergedText);
+        const byIso = indexCountriesByIso3(parsedMerged);
         const row = byIso.get(iso3.toUpperCase());
         if (cancelled) return;
         if (!row) {
           setError(`No statistics row for ISO3 “${iso3}”.`);
           setOrdered(null);
+          setStatsRow(null);
           setCrimeRow(null);
+          setCrimeAuditRows([]);
           return;
         }
 
-        let proxyRow: CountryWideRow | null = null;
-        if (proxyRes.ok) {
-          const proxyText = await proxyRes.text();
-          const parsedProxy = parseCountriesWideCsv(proxyText);
-          proxyRow = indexCountriesByCountryCode(parsedProxy).get(iso3.toUpperCase()) ?? null;
-        }
-
-        let crime: CountryWideRow | null = null;
-        if (crimeRes.ok) {
-          const crimeText = await crimeRes.text();
-          const parsedCrime = parseCountriesWideCsv(crimeText);
-          crime = findCrimeRow(parsedCrime, flag.label);
-        }
-
         if (cancelled) return;
+        const proxy = proxyFromMergedRow(row);
+        setStatsRow(row);
         setDatasetNote(row.notes?.trim() || '');
-        setProxyDatasetNote(proxyRow?.notes?.trim() || '');
-        setCrimeRow(crime);
-        setOrdered(orderMetrics(wideRowToStatMetrics(row, iso3.toUpperCase(), proxyRow)));
+        setProxyDatasetNote(row.proxy_notes?.trim() || '');
+        setCrimeRow(crimeFromMergedRow(row));
+        setOrdered(orderMetrics(wideRowToStatMetrics(row, iso3.toUpperCase(), proxy)));
         setError(null);
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Failed to load data.');
+          setOrdered(null);
+          setStatsRow(null);
           setCrimeRow(null);
         }
       }
@@ -373,12 +357,18 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
         });
       }
     }
+    if (statsRow) {
+      for (const c of collectSourceUrlsFromWideRow(statsRow)) {
+        if (map.has(c.url)) continue;
+        map.set(c.url, { name: c.label, url: c.url, date: '' });
+      }
+    }
     for (const c of collectCrimeSourceUrls(crimeRow)) {
       if (map.has(c.url)) continue;
       map.set(c.url, { name: c.label, url: c.url, date: '' });
     }
     return [...map.values()];
-  }, [ordered, crimeRow]);
+  }, [ordered, statsRow, crimeRow]);
 
   const displayTitle = flag.label.toUpperCase();
 
@@ -433,9 +423,10 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
         {ordered && ordered.length > 0 ? (
           <>
             <p className="mb-4 max-w-2xl font-mono text-[11px] leading-relaxed text-neutral-500">
-              Main file: World Bank Data360 (GDP, overall TFR, migrant stock, corridors). Proxy file: native /
-              foreign-born population and birth metrics. Crime file: police-recorded proxies (petty, rape, theft,
-              sexual violence) with 2000 reference vs latest where available. Open card notes for definitions.
+              Data: <code className="text-neutral-400">centralized_merged_country_stats.csv</code> (economics,
+              demographics proxies, and crime baselines in one file). Crime baseline audit:{' '}
+              <code className="text-neutral-400">crime_baseline_replacement_audit.csv</code>. Open card notes for
+              definitions.
             </p>
             {datasetNote ? (
               <details className="mb-3 max-w-2xl border border-neutral-800 bg-[#121212] p-3 font-mono text-[10px] text-neutral-500">
@@ -448,7 +439,7 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
             {proxyDatasetNote ? (
               <details className="mb-6 max-w-2xl border border-neutral-800 bg-[#121212] p-3 font-mono text-[10px] text-neutral-500">
                 <summary className="cursor-pointer text-neutral-400 hover:text-neutral-200">
-                  Proxy demographics &amp; births CSV note
+                  Proxy demographics &amp; births note (merged CSV)
                 </summary>
                 <p className="mt-2 leading-relaxed">{proxyDatasetNote}</p>
               </details>

@@ -78,6 +78,29 @@ function syncFlagsToPublic() {
   };
 }
 
+function syncHeroAssetsToPublic() {
+  return {
+    name: 'sync-hero-assets-to-public',
+    enforce: 'pre' as const,
+    buildStart() {
+      const destDir = path.join(__dirname, 'public', 'hero');
+      fs.mkdirSync(destDir, { recursive: true });
+
+      const candidates = [
+        { src: path.join(__dirname, 'Assets', 'europe.png'), dest: 'europe.png' },
+        { src: path.join(__dirname, 'Assets', 'europe_countries.svg'), dest: 'europe.svg' },
+        { src: path.join(__dirname, 'Assets', 'eu.svg'), dest: 'europe.svg' },
+      ];
+
+      for (const c of candidates) {
+        if (!fs.existsSync(c.src)) continue;
+        fs.copyFileSync(c.src, path.join(destDir, c.dest));
+        break;
+      }
+    },
+  };
+}
+
 function virtualFlagFilenames() {
   const flagsDir = path.join(__dirname, 'Assets', 'Flags');
 
@@ -114,5 +137,5 @@ function virtualFlagFilenames() {
 }
 
 export default defineConfig({
-  plugins: [react(), syncDataCsvToPublic(), syncFlagsToPublic(), virtualFlagFilenames()],
+  plugins: [react(), syncDataCsvToPublic(), syncFlagsToPublic(), syncHeroAssetsToPublic(), virtualFlagFilenames()],
 });

@@ -25,6 +25,7 @@ export const JEWISH_POPULATION_BY_ISO3: Record<string, JewishPopulationEntry> = 
   DNK: { value: '~6,400', referencePeriod: '', notes: '' },
   EST: { value: '<500–1,000', referencePeriod: '', notes: '' },
   FIN: { value: '~1,000–1,500', referencePeriod: '', notes: '' },
+  FRA: { value: '~440,000–500,000', referencePeriod: '', notes: '' },
   DEU: {
     value: '125,000',
     referencePeriod: '',
@@ -78,7 +79,9 @@ export const JEWISH_POPULATION_BY_ISO3: Record<string, JewishPopulationEntry> = 
   },
   GBR: { value: '312,000–313,000', referencePeriod: '', notes: '' },
   AUS: { value: '117,000–118,000', referencePeriod: '', notes: '' },
+  CAN: { value: '~398,000–410,000', referencePeriod: '2024', notes: '' },
   NZL: { value: '~7,500', referencePeriod: '', notes: '' },
+  USA: { value: '~7.5–7.7 million', referencePeriod: '2024', notes: '' },
 };
 
 export function getJewishPopulation(iso3: string): JewishPopulationEntry | null {

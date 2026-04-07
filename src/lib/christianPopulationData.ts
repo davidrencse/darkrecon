@@ -32,6 +32,7 @@ export const CHRISTIAN_POPULATION_BY_ISO3: Record<string, ChristianPopulationEnt
   DNK: { value: '~4.5 million (~77%)', referencePeriod: '', notes: '' },
   EST: { value: '~0.4–0.7 million (~31–53%)', referencePeriod: '', notes: '' },
   FIN: { value: '~3.6 million (~64–72%)', referencePeriod: '', notes: '' },
+  FRA: { value: '~36–41 million (~55–63%)', referencePeriod: '', notes: '' },
   DEU: { value: '~39.8–42 million (~48–56%)', referencePeriod: '', notes: '' },
   GRC: { value: '~9.5–10 million (~89–93%)', referencePeriod: '', notes: '' },
   HUN: { value: '~5.3 million (~53–72%)', referencePeriod: '', notes: '' },
@@ -73,10 +74,20 @@ export const CHRISTIAN_POPULATION_BY_ISO3: Record<string, ChristianPopulationEnt
     referencePeriod: '2021 census',
     notes: 'Continued decline since.',
   },
+  CAN: {
+    value: '~17–22 million (~42–53%)',
+    referencePeriod: '2021–2025 surveys',
+    notes: 'Canada census and surveys show faster secularization.',
+  },
   NZL: {
     value: '~1.6–1.7 million (~32–37%)',
     referencePeriod: '',
     notes: '2023 census shows further drop to around 32%.',
+  },
+  USA: {
+    value: '~210–235 million (~62–69%)',
+    referencePeriod: '2024',
+    notes: 'US decline has slowed but continues over time.',
   },
 };
 

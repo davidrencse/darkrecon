@@ -1,10 +1,11 @@
 /**
  * Maps `flag-of-*.png` ids to ISO 3166-1 alpha-3 codes present in
- * `Assets/Data/countries_screenshot_stats_latest.csv`.
+ * `Assets/Data/centralized_merged_country_stats.csv` (or legacy screenshot CSV).
  */
 export const FLAG_ID_TO_ISO3: Record<string, string> = {
   'flag-of-Australia.png': 'AUS',
   'flag-of-Austria.png': 'AUT',
+  'flag-of-Canada.png': 'CAN',
   'flag-of-Belarus.png': 'BLR',
   'flag-of-Belgium.png': 'BEL',
   'flag-of-Bosnia-Herzegovina.png': 'BIH',
@@ -15,6 +16,7 @@ export const FLAG_ID_TO_ISO3: Record<string, string> = {
   'flag-of-Denmark.png': 'DNK',
   'flag-of-Estonia.png': 'EST',
   'flag-of-Finland.png': 'FIN',
+  'flag-of-France.png': 'FRA',
   'flag-of-Germany.png': 'DEU',
   'flag-of-Greece.png': 'GRC',
   'flag-of-Hungary.png': 'HUN',
@@ -44,6 +46,9 @@ export const FLAG_ID_TO_ISO3: Record<string, string> = {
   'flag-of-Switzerland.png': 'CHE',
   'flag-of-Ukraine.png': 'UKR',
   'flag-of-United-Kingdom.png': 'GBR',
+  'flag-of-United-States.png': 'USA',
+  'flag-of-United-States-of-America.png': 'USA',
+  'flag-of-USA.png': 'USA',
 };
 
 export function getIso3ForFlagId(flagId: string): string | undefined {

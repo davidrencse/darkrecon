@@ -20,7 +20,7 @@ type CrimeBoxConfig = {
 const CRIME_BOXES: CrimeBoxConfig[] = [
   {
     id: 'petty-2000s',
-    title: 'Petty crime statistics in 2000',
+    title: 'Petty crime statistics (baseline)',
     valueKey: 'petty_2000s_value',
     yearKey: 'petty_2000s_year',
     unitKey: 'petty_2000s_unit',
@@ -43,7 +43,7 @@ const CRIME_BOXES: CrimeBoxConfig[] = [
   },
   {
     id: 'rape-2000s',
-    title: 'Rape crime statistics in 2000',
+    title: 'Rape crime statistics (baseline)',
     valueKey: 'rape_2000s_value',
     yearKey: 'rape_2000s_year',
     unitKey: 'rape_2000s_unit',
@@ -66,7 +66,7 @@ const CRIME_BOXES: CrimeBoxConfig[] = [
   },
   {
     id: 'theft-2000s',
-    title: 'Theft crime statistics in 2000',
+    title: 'Theft crime statistics (baseline)',
     valueKey: 'theft_2000s_value',
     yearKey: 'theft_2000s_year',
     unitKey: 'theft_2000s_unit',
@@ -89,7 +89,7 @@ const CRIME_BOXES: CrimeBoxConfig[] = [
   },
   {
     id: 'sexual-2000s',
-    title: 'Sexual crime statistics in 2000',
+    title: 'Sexual crime statistics (baseline)',
     valueKey: 'sexual_2000s_value',
     yearKey: 'sexual_2000s_year',
     unitKey: 'sexual_2000s_unit',
@@ -124,19 +124,19 @@ function formatCount(n: number): string {
 
 type PctBadge = { label: string; variant: 'destructive' | 'success' | 'outline' };
 
-function pctChangeVs2000Reference(latest: number | null, baseline: number | null): PctBadge | null {
+function pctChangeVsBaseline(latest: number | null, baseline: number | null): PctBadge | null {
   if (latest == null || baseline == null) return null;
   if (baseline === 0) {
-    if (latest === 0) return { label: '0% vs 2000 reference', variant: 'outline' };
+    if (latest === 0) return { label: '0% vs baseline', variant: 'outline' };
     return null;
   }
   const pct = ((latest - baseline) / baseline) * 100;
   const rounded = Math.round(pct * 10) / 10;
   if (Math.abs(rounded) < 0.05) {
-    return { label: '0% vs 2000 reference', variant: 'outline' };
+    return { label: '0% vs baseline', variant: 'outline' };
   }
   const sign = rounded > 0 ? '+' : '';
-  const label = `${sign}${rounded.toFixed(1)}% vs 2000 reference`;
+  const label = `${sign}${rounded.toFixed(1)}% vs baseline`;
   if (rounded > 0) return { label, variant: 'destructive' };
   return { label, variant: 'success' };
 }
@@ -156,11 +156,11 @@ function CrimeStatCard({ row, config }: { row: CountryWideRow; config: CrimeBoxC
   if (config.baselineValueKey) {
     const baselineRaw = String(row[config.baselineValueKey] ?? '');
     const baselineN = parseCount(baselineRaw);
-    comparison = pctChangeVs2000Reference(n, baselineN);
+    comparison = pctChangeVsBaseline(n, baselineN);
     if (n != null && baselineN === 0 && n > 0) {
-      comparisonNote = '2000 reference was zero; percent change is not defined.';
+      comparisonNote = 'Baseline was zero; percent change is not defined.';
     } else if (n == null || baselineN == null) {
-      comparisonNote = 'Need both latest and 2000 reference values to compute change.';
+      comparisonNote = 'Need both latest and baseline values to compute change.';
     }
   }
 
@@ -180,7 +180,7 @@ function CrimeStatCard({ row, config }: { row: CountryWideRow; config: CrimeBoxC
           {config.baselineValueKey ? (
             <div className="space-y-2">
               <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-600">
-                Change vs 2000 reference
+                Change vs baseline
               </p>
               {comparison ? (
                 <Badge variant={comparison.variant}>{comparison.label}</Badge>
@@ -232,18 +232,27 @@ export function CrimeMetricsSection({ crimeRow }: CrimeMetricsSectionProps) {
         <CardHeader>
           <CardTitle className="text-neutral-400">No crime data</CardTitle>
           <CardDescription>
-            No crime statistics row matched this country in the bundled CSV.
+            No crime statistics columns were found for this country in the merged CSV.
           </CardDescription>
         </CardHeader>
       </Card>
     );
   }
 
+  const generalNote = String(crimeRow.crime_baseline_general_note ?? '').trim();
+
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      {CRIME_BOXES.map((cfg) => (
-        <CrimeStatCard key={cfg.id} row={crimeRow} config={cfg} />
-      ))}
+    <div className="flex flex-col gap-4">
+      {generalNote ? (
+        <p className="rounded-md border border-neutral-800 bg-neutral-950/40 p-3 font-mono text-[11px] leading-relaxed text-neutral-500">
+          {generalNote}
+        </p>
+      ) : null}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {CRIME_BOXES.map((cfg) => (
+          <CrimeStatCard key={cfg.id} row={crimeRow} config={cfg} />
+        ))}
+      </div>
     </div>
   );
 }

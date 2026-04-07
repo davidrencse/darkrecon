@@ -1,0 +1,177 @@
+country,metric,old_year,new_year,replaced
+Australia,petty,2009,2003,True
+Australia,theft,2009,2003,True
+Australia,rape,2009,2009,False
+Australia,sexual,2009,2009,False
+Austria,petty,2009,2004,True
+Austria,theft,2009,2004,True
+Austria,rape,2009,2004,True
+Austria,sexual,2009,2005,True
+Belarus,petty,2006,2005,True
+Belarus,theft,2009,2003,True
+Belarus,rape,2009,2003,True
+Belarus,sexual,2009,2004,True
+Belgium,petty,2009,2003,True
+Belgium,theft,2009,2003,True
+Belgium,rape,2009,2003,True
+Belgium,sexual,2009,2003,True
+Bosnia and Herzegovina,petty,2009,2005,True
+Bosnia and Herzegovina,theft,2009,2005,True
+Bosnia and Herzegovina,rape,2009,2005,True
+Bosnia and Herzegovina,sexual,2009,2007,True
+Bulgaria,petty,2009,2003,True
+Bulgaria,theft,2009,2003,True
+Bulgaria,rape,2009,2003,True
+Bulgaria,sexual,2009,2003,True
+Croatia,petty,2009,2003,True
+Croatia,theft,2009,2003,True
+Croatia,rape,2009,2003,True
+Croatia,sexual,2009,2003,True
+Cyprus,petty,2009,2003,True
+Cyprus,theft,2009,2003,True
+Cyprus,rape,2009,2003,True
+Cyprus,sexual,2009,2004,True
+Czech Republic,petty,2009,2003,True
+Czech Republic,theft,2009,2003,True
+Czech Republic,rape,2009,2003,True
+Czech Republic,sexual,2009,2003,True
+Denmark,petty,2009,2003,True
+Denmark,theft,2009,2003,True
+Denmark,rape,2009,2003,True
+Denmark,sexual,2009,2009,False
+Estonia,petty,2009,2009,False
+Estonia,theft,2009,2003,True
+Estonia,rape,2009,2003,True
+Estonia,sexual,2009,2003,True
+Finland,petty,2009,2003,True
+Finland,theft,2009,2003,True
+Finland,rape,2009,2003,True
+Finland,sexual,2009,2003,True
+Germany,petty,2009,2003,True
+Germany,theft,2009,2003,True
+Germany,rape,2009,2003,True
+Germany,sexual,2009,2003,True
+Greece,petty,2009,2003,True
+Greece,theft,2009,2003,True
+Greece,rape,2009,2003,True
+Greece,sexual,2009,2003,True
+Hungary,petty,2009,2003,True
+Hungary,theft,2009,2003,True
+Hungary,rape,2009,2003,True
+Hungary,sexual,2009,2003,True
+Iceland,petty,2009,2003,True
+Iceland,theft,2009,2003,True
+Iceland,rape,2009,2003,True
+Iceland,sexual,2008,2005,True
+Ireland,petty,2009,2003,True
+Ireland,theft,2009,2003,True
+Ireland,rape,2009,2003,True
+Ireland,sexual,2009,2004,True
+Italy,petty,2004,2003,True
+Italy,theft,2009,2003,True
+Italy,rape,2009,2009,False
+Italy,sexual,2009,2003,True
+Latvia,petty,2009,2003,True
+Latvia,theft,2009,2003,True
+Latvia,rape,2009,2003,True
+Latvia,sexual,2009,2003,True
+Liechtenstein,petty,2009,2003,True
+Liechtenstein,theft,2009,2003,True
+Liechtenstein,rape,2009,2003,True
+Liechtenstein,sexual,2009,2003,True
+Lithuania,petty,2009,2009,False
+Lithuania,theft,2009,2003,True
+Lithuania,rape,2009,2003,True
+Lithuania,sexual,2009,2003,True
+Luxembourg,petty,2009,2006,True
+Luxembourg,theft,2009,2006,True
+Luxembourg,rape,2009,2006,True
+Luxembourg,sexual,2009,2006,True
+Malta,petty,2009,2003,True
+Malta,theft,2009,2003,True
+Malta,rape,2009,2003,True
+Malta,sexual,2009,2007,True
+Moldova,petty,2009,2004,True
+Moldova,theft,2009,2003,True
+Moldova,rape,2009,2003,True
+Moldova,sexual,2009,2004,True
+Monaco,petty,2006,2003,True
+Monaco,theft,2006,2005,True
+Monaco,rape,2006,2003,True
+Monaco,sexual,2006,2006,False
+Montenegro,petty,2009,2003,True
+Montenegro,theft,2009,2003,True
+Montenegro,rape,2009,2005,True
+Montenegro,sexual,2009,2003,True
+Netherlands,petty,2009,2009,False
+Netherlands,theft,2009,2009,False
+Netherlands,rape,2009,2009,False
+Netherlands,sexual,2009,2009,False
+New Zealand,petty,2009,2005,True
+New Zealand,theft,2009,2005,True
+New Zealand,rape,2009,2005,True
+New Zealand,sexual,2009,2005,True
+Norway,petty,2009,2003,True
+Norway,theft,2009,2003,True
+Norway,rape,2009,2003,True
+Norway,sexual,2009,2003,True
+Poland,petty,2009,2003,True
+Poland,theft,2009,2003,True
+Poland,rape,2009,2003,True
+Poland,sexual,2009,2007,True
+Portugal,petty,2009,2003,True
+Portugal,theft,2009,2003,True
+Portugal,rape,2009,2003,True
+Portugal,sexual,2009,2003,True
+Romania,petty,2009,2003,True
+Romania,theft,2009,2003,True
+Romania,rape,2009,2003,True
+Romania,sexual,2009,2007,True
+Russia,petty,2009,2004,True
+Russia,theft,2009,2004,True
+Russia,rape,2009,2004,True
+Russia,sexual,2009,2004,True
+Serbia,petty,2009,2005,True
+Serbia,theft,2009,2005,True
+Serbia,rape,2009,2005,True
+Serbia,sexual,2009,2005,True
+Slovakia,petty,2009,2009,False
+Slovakia,theft,2009,2009,False
+Slovakia,rape,2009,2009,False
+Slovakia,sexual,2009,2009,False
+Slovenia,petty,2009,2003,True
+Slovenia,theft,2009,2003,True
+Slovenia,rape,2009,2003,True
+Slovenia,sexual,2009,2003,True
+Spain,petty,2009,2005,True
+Spain,theft,2009,2007,True
+Spain,rape,2009,2005,True
+Spain,sexual,2009,2007,True
+Sweden,petty,2009,2003,True
+Sweden,theft,2009,2003,True
+Sweden,rape,2009,2003,True
+Sweden,sexual,2009,2003,True
+Switzerland,petty,2009,2003,True
+Switzerland,theft,2009,2003,True
+Switzerland,rape,2009,2003,True
+Switzerland,sexual,2009,2009,False
+Ukraine,petty,2009,2009,False
+Ukraine,theft,2009,2003,True
+Ukraine,rape,2009,2003,True
+Ukraine,sexual,2009,2003,True
+United Kingdom,petty,2009,2003,True
+United Kingdom,theft,2009,2003,True
+United Kingdom,rape,2009,2003,True
+United Kingdom,sexual,2009,2004,True
+France,petty,2009,2003,True
+France,theft,2009,2003,True
+France,rape,2009,2003,True
+France,sexual,2009,2003,True
+United States,petty,2009,2003,True
+United States,theft,2009,2003,True
+United States,rape,2009,2003,True
+United States,sexual,2009,2009,False
+Canada,petty,2009,2003,True
+Canada,theft,2009,2003,True
+Canada,rape,2009,2003,True
+Canada,sexual,2009,2003,True

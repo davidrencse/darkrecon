@@ -7,6 +7,7 @@ function normCountry(s: string): string {
 /** Flag label → exact `country` cell in `countries_crime_2000s_latest.csv`. */
 const FLAG_LABEL_TO_CRIME_COUNTRY: Record<string, string> = {
   'Bosnia Herzegovina': 'Bosnia and Herzegovina',
+  'United States of America': 'United States',
 };
 
 /**

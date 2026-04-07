@@ -33,6 +33,7 @@ export const MUSLIM_POPULATION_BY_ISO3: Record<string, MuslimPopulationEntry> = 
   DNK: { value: '~300,000–350,000 (~5–6%)', referencePeriod: '', notes: '' },
   EST: { value: '<2,000–5,000 (~0.1–0.3%)', referencePeriod: '', notes: '' },
   FIN: { value: '~100,000–150,000 (~2–2.5%)', referencePeriod: '', notes: '' },
+  FRA: { value: '~5.7–6.5 million (~8–10%)', referencePeriod: '', notes: '' },
   DEU: { value: '~5.5–6.0 million (~6.5–7%)', referencePeriod: '', notes: '' },
   GRC: {
     value: '~400,000–600,000 (~4–5%)',
@@ -95,10 +96,20 @@ export const MUSLIM_POPULATION_BY_ISO3: Record<string, MuslimPopulationEntry> = 
     notes:
       'Recent informal estimates suggest growth toward 900,000–1 million by 2024–2025 due to immigration.',
   },
+  CAN: {
+    value: '~1.8 million (~4.9%)',
+    referencePeriod: '2021',
+    notes: 'Modest growth since the 2021 census baseline.',
+  },
   NZL: {
     value: '~57,000–70,000 (~1.1–1.3%)',
     referencePeriod: '',
     notes: '2018 census baseline with modest growth since.',
+  },
+  USA: {
+    value: '~3.5–4.5 million (~1.1–1.3%)',
+    referencePeriod: '2020–2024',
+    notes: 'Estimate range from survey and religion-census sources.',
   },
 };
 
