@@ -46,6 +46,40 @@ function syncDataCsvToPublic() {
         if (!name.toLowerCase().endsWith('.csv')) continue;
         fs.copyFileSync(path.join(srcDir, name), path.join(destDir, name));
       }
+
+      const germanyForeignStudents = path.join(
+        __dirname,
+        'Assets',
+        'Data',
+        'Europe',
+        'Germany',
+        'foreign_students.csv',
+      );
+      if (fs.existsSync(germanyForeignStudents)) {
+        fs.copyFileSync(germanyForeignStudents, path.join(destDir, 'germany_foreign_students.csv'));
+      }
+
+      const germanyTreemapCsv = path.join(
+        __dirname,
+        'Assets',
+        'Data',
+        'Europe',
+        'Germany',
+        'germany_populationpyramid_2024_treemap_labeled_items.csv',
+      );
+      if (fs.existsSync(germanyTreemapCsv)) {
+        fs.copyFileSync(
+          germanyTreemapCsv,
+          path.join(destDir, 'germany_immigration_treemap_labeled_items.csv'),
+        );
+      }
+
+      const germanyDirPublic = path.join(__dirname, 'public', 'germany');
+      fs.mkdirSync(germanyDirPublic, { recursive: true });
+      const poppyra = path.join(__dirname, 'Assets', 'Data', 'Europe', 'Germany', 'poppyra.png');
+      if (fs.existsSync(poppyra)) {
+        fs.copyFileSync(poppyra, path.join(germanyDirPublic, 'poppyra.png'));
+      }
     },
   };
 }

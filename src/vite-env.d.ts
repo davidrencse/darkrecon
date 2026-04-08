@@ -18,3 +18,8 @@ declare module '*.svg?url' {
   const url: string;
   export default url;
 }
+
+declare module '*.csv?raw' {
+  const raw: string;
+  export default raw;
+}

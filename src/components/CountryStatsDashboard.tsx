@@ -2,28 +2,60 @@ import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { FlagEntry } from '../types/flag';
 import type { CountryStatMetric } from '../types/countryStats';
 import { collectSourceUrlsFromWideRow, wideRowToStatMetrics } from '../lib/countryStatsMetrics';
+import { findCorruptionLostRow, insertLostToCorruptionMetric } from '../lib/corruptionLost';
+import { findExpenditureRow, metricsFromExpenditureRow } from '../lib/expenditures';
+import { findMacroIndicatorsRow, metricsFromMacroIndicatorsRow } from '../lib/macroIndicators';
+import {
+  fallbackGermanyForeignStudentsMetrics,
+  findForeignStudentsRow,
+  metricsFromForeignStudentsRow,
+  metricsFromGermanyForeignStudentsCsv,
+} from '../lib/foreignStudents';
 import { crimeFromMergedRow, proxyFromMergedRow } from '../lib/mergedCountryStats';
 import type { CountryWideRow } from '../lib/parseCountriesWideCsv';
 import { indexCountriesByIso3, parseCountriesWideCsv } from '../lib/parseCountriesWideCsv';
 import { collectCrimeSourceUrls, CrimeMetricsSection } from './CrimeMetricsSection';
 import { CollapsibleFlagSection } from './CollapsibleFlagSection';
+import { GermanyImmigrationSection } from './GermanyImmigrationSection';
+import { GermanyPopulationPyramid } from './GermanyPopulationPyramid';
+import germanyForeignStudentsRaw from '../../Assets/Data/Europe/Germany/foreign_students.csv?raw';
+import fallbackForeignStudentsRaw from '../../Assets/Data/foreign_student_population_screenshot_countries.csv?raw';
 
 const MERGED_CSV_URL = '/data/centralized_merged_country_stats.csv';
-const CRIME_AUDIT_CSV_URL = '/data/crime_baseline_replacement_audit.csv';
+const EXPENDITURES_CSV_URL = '/data/expenditures.csv';
+const FOREIGN_STUDENTS_CSV_URL = '/data/foreign_student_population_screenshot_countries.csv';
+const FOREIGN_STUDENTS_GERMANY_CSV_URL = '/data/germany_foreign_students.csv';
+const CORRUPTION_LOST_CSV_URL = '/data/corruption_money_lost_modeled_estimates.csv';
+const MACRO_INDICATORS_CSV_URL = '/data/countries_latest_inflation_unemployment_interest_with_real_median_wage.csv';
 
 const METRIC_ORDER = [
   'GDP',
   'GDP per capita',
+  'Inflation',
+  'Unemployment',
+  'Interest',
+  'Real Median Wage',
+  'Total government expenditure',
+  'Social protection expenditure',
+  'Health expenditure',
+  'Education expenditure',
+  'Defence expenditure',
+  'Economic affairs expenditure',
+  'Immigration welfare spending',
+  'Lost to Corruption',
+  'Expenditure breakdown (pie)',
   'White (native) population',
-  'Non-European population',
+  'Foreign Population',
   'Christian population',
   'Muslim population',
   'Jewish population',
+  'Foreign students (total)',
+  'Foreign students by origin (pie)',
+  'How Many on Student Aid',
   'Immigrants',
   'Total birth rate',
   'White (native) birth rate',
   'Immigrant birth rate',
-  'Top immigrant countries',
 ] as const;
 
 function extractLeadingPercent(value: string): number | null {
@@ -175,36 +207,211 @@ function MetricTile({
   );
 }
 
-function TopCountriesTile({ row }: { row: CountryStatMetric }) {
-  const items = row.value
-    .split(';')
-    .map((s) => s.trim())
-    .filter(Boolean);
+function ExpenditurePieTile({ row }: { row: CountryStatMetric }) {
+  let slices: { label: string; value: number }[] = [];
+  try {
+    if (row.value.trim() && row.value.trim() !== 'N/A') {
+      const parsed = JSON.parse(row.value) as { label: string; value: number }[];
+      if (Array.isArray(parsed)) slices = parsed.filter((s) => Number.isFinite(s.value) && s.value > 0);
+    }
+  } catch {
+    slices = [];
+  }
+  const total = slices.reduce((sum, s) => sum + s.value, 0);
+  const palette = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040'];
+  let acc = 0;
+  const stops = slices.map((s, i) => {
+    const start = total > 0 ? (acc / total) * 100 : 0;
+    acc += s.value;
+    const end = total > 0 ? (acc / total) * 100 : 0;
+    return `${palette[i % palette.length]} ${start}% ${end}%`;
+  });
+  const bg = stops.length > 0 ? `conic-gradient(${stops.join(', ')})` : 'none';
   return (
-    <article className="border border-neutral-800 bg-[#121212] p-4 sm:p-5 lg:col-span-3">
+    <article className="border border-neutral-800 bg-[#121212] p-4 sm:p-5">
       <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-500">
         {row.metric}
       </p>
-      <ul className="mt-4 flex flex-wrap gap-2">
-        {items.map((name) => (
-          <li
-            key={name}
-            className="border border-neutral-800 bg-black/40 px-3 py-1.5 font-mono text-xs text-neutral-300"
-          >
-            {name}
-          </li>
-        ))}
-      </ul>
+      {slices.length > 0 ? (
+        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="h-28 w-28 rounded-full border border-neutral-700" style={{ background: bg }} />
+          <ul className="space-y-1">
+            {slices.map((s, i) => (
+              <li key={s.label} className="flex items-center gap-2 font-mono text-[11px] text-neutral-300">
+                <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: palette[i % palette.length] }} />
+                <span>{s.label}</span>
+                <span className="text-neutral-500">{s.value.toFixed(1)}%</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="mt-4 font-mono text-sm text-neutral-500">No percentage split available.</p>
+      )}
       <MetaLine row={row} />
-      {row.source_url ? (
-        <div className="mt-3">
-          <SourceLinks
-            url={row.source_url}
-            className="inline-flex items-center gap-1 font-mono text-[10px] text-[var(--uk-accent)] hover:text-neutral-200"
-          />
+      <NoteBlock text={row.notes} />
+    </article>
+  );
+}
+
+function ForeignStudentsOriginTile({ row, compact }: { row: CountryStatMetric; compact?: boolean }) {
+  let origins: { country: string; count: number | null; sharePct: number | null }[] = [];
+  try {
+    const parsed = JSON.parse(row.value) as { country: string; count: number | null; sharePct: number | null }[];
+    if (Array.isArray(parsed)) origins = parsed.filter((o) => o.country);
+  } catch {
+    origins = [];
+  }
+  const palette = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040', '#262626'];
+  const pieValues = origins.map((o) => (o.count && o.count > 0 ? o.count : (o.sharePct ?? 0)));
+  const total = pieValues.reduce((a, b) => a + b, 0);
+  let acc = 0;
+  const stops = pieValues.map((v, i) => {
+    const start = total > 0 ? (acc / total) * 100 : 0;
+    acc += v;
+    const end = total > 0 ? (acc / total) * 100 : 0;
+    return `${palette[i % palette.length]} ${start}% ${end}%`;
+  });
+  const bg = stops.length > 0 ? `conic-gradient(${stops.join(', ')})` : 'none';
+
+  if (compact) {
+    return (
+      <article className="flex min-h-[148px] flex-col border border-neutral-800 bg-[#121212] p-4 sm:p-5">
+        <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-500">{row.metric}</p>
+        {origins.length > 0 ? (
+          <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2">
+            <div
+              className="mx-auto h-16 w-16 shrink-0 self-center rounded-full border border-neutral-700 sm:self-start"
+              style={{ background: bg }}
+            />
+            <ul className="max-h-[7rem] min-h-0 w-full space-y-0.5 overflow-y-auto overflow-x-hidden overscroll-contain pr-0.5">
+              {origins.map((o, i) => (
+                <li key={o.country} className="break-words font-mono text-[10px] leading-snug text-neutral-300">
+                  <span className="mr-1 inline-block h-2 w-2 shrink-0 rounded-sm align-middle" style={{ backgroundColor: palette[i % palette.length] }} />
+                  <span className="font-medium">{o.country}</span>
+                  {' — '}
+                  <span>
+                    {o.count != null ? o.count.toLocaleString('en-US') : 'N/A'}
+                    {o.sharePct != null ? ` (${o.sharePct.toFixed(2)}%)` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="mt-3 font-mono text-xs text-neutral-500">No country breakdown available.</p>
+        )}
+        <MetaLine row={row} />
+        <NoteBlock text={row.notes} />
+      </article>
+    );
+  }
+
+  return (
+    <article className="border border-neutral-800 bg-[#121212] p-4 sm:p-5 lg:col-span-3">
+      <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-500">{row.metric}</p>
+      {origins.length > 0 ? (
+        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div className="h-28 w-28 rounded-full border border-neutral-700" style={{ background: bg }} />
+          <ul className="space-y-2">
+            {origins.map((o, i) => (
+              <li key={o.country} className="font-mono text-xs text-neutral-300">
+                <span className="mr-2 inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: palette[i % palette.length] }} />
+                <span className="font-medium">{o.country}</span>
+                {' — '}
+                <span>
+                  {o.count != null ? o.count.toLocaleString('en-US') : 'N/A'}
+                  {o.sharePct != null ? ` (${o.sharePct.toFixed(2)}%)` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="mt-4 font-mono text-sm text-neutral-500">No country breakdown available.</p>
+      )}
+      <MetaLine row={row} />
+      <NoteBlock text={row.notes} />
+    </article>
+  );
+}
+
+function StudentAidTile({ row }: { row: CountryStatMetric }) {
+  const [open, setOpen] = useState(false);
+  let totalAid = 0;
+  let slices: { country: string; aidCount: number; sharePct: number }[] = [];
+  try {
+    const parsed = JSON.parse(row.value) as {
+      totalAid: number;
+      origins: { country: string; aidCount: number; sharePct: number }[];
+    };
+    totalAid = Number(parsed.totalAid ?? 0);
+    slices = Array.isArray(parsed.origins) ? parsed.origins.filter((s) => s.country && s.aidCount > 0) : [];
+  } catch {
+    totalAid = 0;
+    slices = [];
+  }
+  const palette = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040', '#262626'];
+  const total = slices.reduce((sum, s) => sum + s.aidCount, 0);
+  let acc = 0;
+  const stops = slices.map((s, i) => {
+    const start = total > 0 ? (acc / total) * 100 : 0;
+    acc += s.aidCount;
+    const end = total > 0 ? (acc / total) * 100 : 0;
+    return `${palette[i % palette.length]} ${start}% ${end}%`;
+  });
+  const bg = stops.length ? `conic-gradient(${stops.join(', ')})` : 'none';
+
+  return (
+    <article className="border border-neutral-800 bg-[#121212] p-4 sm:p-5">
+      <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-500">{row.metric}</p>
+      <p className="mt-4 font-mono text-2xl font-semibold leading-none tracking-tight text-neutral-100 sm:text-3xl">
+        {totalAid.toLocaleString('en-US')}
+      </p>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-4 inline-flex w-fit items-center border border-neutral-700 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-neutral-200 hover:border-neutral-500"
+      >
+        View aid pie chart
+      </button>
+      <MetaLine row={row} />
+      <NoteBlock text={row.notes} />
+
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-2xl border border-neutral-700 bg-[#101010] p-4 sm:p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-mono text-sm font-semibold text-neutral-100">Student Aid Breakdown</h3>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="border border-neutral-700 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-neutral-300 hover:border-neutral-500"
+              >
+                Close
+              </button>
+            </div>
+            {slices.length > 0 ? (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <div className="h-36 w-36 rounded-full border border-neutral-700" style={{ background: bg }} />
+                <ul className="max-h-72 flex-1 space-y-1 overflow-auto pr-1">
+                  {slices.map((s, i) => (
+                    <li key={s.country} className="flex items-center gap-2 font-mono text-xs text-neutral-300">
+                      <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: palette[i % palette.length] }} />
+                      <span>{s.country}</span>
+                      <span className="text-neutral-500">
+                        {s.aidCount.toLocaleString('en-US')} ({s.sharePct.toFixed(2)}%)
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="font-mono text-sm text-neutral-500">No student aid breakdown available.</p>
+            )}
+          </div>
         </div>
       ) : null}
-      <NoteBlock text={row.notes} />
     </article>
   );
 }
@@ -223,41 +430,108 @@ function orderMetrics(rows: CountryStatMetric[]): CountryStatMetric[] {
   return ordered;
 }
 
-/** Collapsible groups on the country stats page (order preserved). */
-const STATS_SECTIONS: { id: string; title: string; metrics: readonly string[] }[] = [
-  {
-    id: 'economic',
-    title: 'Economic statistics',
-    metrics: ['GDP', 'GDP per capita'],
-  },
-  {
-    id: 'population',
-    title: 'Population',
-    metrics: [
-      'White (native) population',
-      'Non-European population',
-      'Christian population',
-      'Muslim population',
-      'Jewish population',
-      'Immigrants',
-      'Top immigrant countries',
-    ],
-  },
-  {
-    id: 'birth',
-    title: 'Birth rates',
-    metrics: ['Total birth rate', 'White (native) birth rate', 'Immigrant birth rate'],
-  },
-];
+/** Expenditure tiles + pie (nested under Economic → Government spending). */
+const GOVERNMENT_SPENDING_METRICS = [
+  'Total government expenditure',
+  'Social protection expenditure',
+  'Health expenditure',
+  'Education expenditure',
+  'Defence expenditure',
+  'Economic affairs expenditure',
+  'Immigration welfare spending',
+  'Lost to Corruption',
+  'Expenditure breakdown (pie)',
+] as const;
+
+/** Population tiles (Germany moves some into Immigration subsection). */
+const POPULATION_SECTION_METRICS = [
+  'White (native) population',
+  'Foreign Population',
+  'Christian population',
+  'Muslim population',
+  'Jewish population',
+  'Foreign students (total)',
+  'Foreign students by origin (pie)',
+  'How Many on Student Aid',
+  'Immigrants',
+] as const;
+
+/** Shown at top of Germany Immigration (same order as in population elsewhere). */
+const GERMANY_IMMIGRATION_TOP_METRICS = [
+  'Immigrants',
+  'Foreign students (total)',
+  'Foreign students by origin (pie)',
+] as const;
+
+const GERMANY_IMMIGRATION_METRICS_SET = new Set<string>(GERMANY_IMMIGRATION_TOP_METRICS);
+
+const GERMANY_IMMIGRATION_TREEMAP_COUNTRIES = 27;
+const GERMANY_IMMIGRATION_SUBSECTION_COUNT =
+  GERMANY_IMMIGRATION_TREEMAP_COUNTRIES + GERMANY_IMMIGRATION_TOP_METRICS.length;
+
+function getPopulationSectionMetrics(iso3: string): string[] {
+  if (iso3.toUpperCase() !== 'DEU') return [...POPULATION_SECTION_METRICS];
+  return POPULATION_SECTION_METRICS.filter((m) => !GERMANY_IMMIGRATION_METRICS_SET.has(m));
+}
+
+type MetricSubsection = { id: string; title: string; metrics: readonly string[] };
+type CustomSubsection = { id: string; title: string; kind: 'germany_immigration' };
+type SubsectionDef = MetricSubsection | CustomSubsection;
+
+type StatSectionDef = {
+  id: string;
+  title: string;
+  metrics: readonly string[];
+  subsections?: readonly SubsectionDef[];
+};
+
+function getStatSections(iso3: string): StatSectionDef[] {
+  const isDeu = iso3.toUpperCase() === 'DEU';
+  return [
+    {
+      id: 'economic',
+      title: 'Economic statistics',
+      metrics: ['GDP', 'GDP per capita', 'Inflation', 'Unemployment', 'Interest', 'Real Median Wage'],
+      subsections: [
+        {
+          id: 'government_spending',
+          title: 'Government spending',
+          metrics: GOVERNMENT_SPENDING_METRICS,
+        },
+      ],
+    },
+    {
+      id: 'population',
+      title: 'Population',
+      metrics: getPopulationSectionMetrics(iso3),
+      subsections: isDeu
+        ? [{ id: 'germany_immigration', title: 'Immigration', kind: 'germany_immigration' as const }]
+        : undefined,
+    },
+    {
+      id: 'birth',
+      title: 'Birth rates',
+      metrics: ['Total birth rate', 'White (native) birth rate', 'Immigrant birth rate'],
+    },
+  ];
+}
 
 const STAT_GRID = 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3';
 
-function renderStatTile(row: CountryStatMetric): ReactNode {
-  if (row.metric === 'Top immigrant countries') {
-    if (isUnavailable(row.value)) {
-      return <MetricTile row={row} />;
-    }
-    return <TopCountriesTile row={row} />;
+type RenderStatTileOpts = { foreignStudentsPieCompact?: boolean };
+
+function renderStatTile(row: CountryStatMetric, opts?: RenderStatTileOpts): ReactNode {
+  if (row.metric === 'Expenditure breakdown (pie)') {
+    return <ExpenditurePieTile row={row} />;
+  }
+  if (row.metric === 'Foreign students by origin (pie)') {
+    return <ForeignStudentsOriginTile row={row} compact={opts?.foreignStudentsPieCompact} />;
+  }
+  if (row.metric === 'How Many on Student Aid') {
+    return <StudentAidTile row={row} />;
+  }
+  if (row.metric === 'Lost to Corruption') {
+    return <MetricTile row={row} largeValue />;
   }
   if (row.metric === 'GDP') {
     return <MetricTile row={row} largeValue accent />;
@@ -294,7 +568,13 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
     let cancelled = false;
     (async () => {
       try {
-        const mergedRes = await fetch(MERGED_CSV_URL);
+        const [mergedRes, expendituresRes, foreignStudentsRes, corruptionRes, macroIndicatorsRes] = await Promise.all([
+          fetch(MERGED_CSV_URL),
+          fetch(EXPENDITURES_CSV_URL),
+          fetch(FOREIGN_STUDENTS_CSV_URL),
+          fetch(CORRUPTION_LOST_CSV_URL),
+          fetch(MACRO_INDICATORS_CSV_URL),
+        ]);
         if (!mergedRes.ok) throw new Error(`Could not load merged country data (${mergedRes.status})`);
         const mergedText = await mergedRes.text();
         const parsedMerged = parseCountriesWideCsv(mergedText);
@@ -306,8 +586,51 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
           setOrdered(null);
           setStatsRow(null);
           setCrimeRow(null);
-          setCrimeAuditRows([]);
           return;
+        }
+
+        let expenditureMetrics: CountryStatMetric[] = [];
+        if (expendituresRes.ok) {
+          const expendituresText = await expendituresRes.text();
+          const expendituresRows = parseCountriesWideCsv(expendituresText);
+          const eRow = findExpenditureRow(expendituresRows, row.country || flag.label);
+          if (eRow) expenditureMetrics = metricsFromExpenditureRow(eRow, iso3.toUpperCase());
+        }
+
+        const countryLabel = row.country || flag.label;
+        let macroMetrics: CountryStatMetric[] = metricsFromMacroIndicatorsRow(null, countryLabel);
+        if (macroIndicatorsRes.ok) {
+          const macroText = await macroIndicatorsRes.text();
+          const macroRows = parseCountriesWideCsv(macroText);
+          const macroRow = findMacroIndicatorsRow(macroRows, countryLabel);
+          macroMetrics = metricsFromMacroIndicatorsRow(macroRow, countryLabel);
+        }
+
+        let corruptionRow: CountryWideRow | null = null;
+        if (corruptionRes.ok) {
+          const corruptionText = await corruptionRes.text();
+          const corruptionRows = parseCountriesWideCsv(corruptionText);
+          corruptionRow = findCorruptionLostRow(corruptionRows, countryLabel);
+        }
+        insertLostToCorruptionMetric(expenditureMetrics, corruptionRow, countryLabel);
+
+        let foreignStudentMetrics: CountryStatMetric[] = [];
+        if (iso3.toUpperCase() === 'DEU') {
+          let deText = '';
+          const deRes = await fetch(FOREIGN_STUDENTS_GERMANY_CSV_URL);
+          if (deRes.ok) deText = await deRes.text();
+          if (!deText.trim()) deText = germanyForeignStudentsRaw;
+          foreignStudentMetrics = metricsFromGermanyForeignStudentsCsv(deText);
+          if (foreignStudentMetrics.length === 0) {
+            foreignStudentMetrics = fallbackGermanyForeignStudentsMetrics();
+          }
+        } else {
+          let fsText = '';
+          if (foreignStudentsRes.ok) fsText = await foreignStudentsRes.text();
+          if (!fsText.trim()) fsText = fallbackForeignStudentsRaw;
+          const fsRows = parseCountriesWideCsv(fsText);
+          const fsRow = findForeignStudentsRow(fsRows, row.country || flag.label);
+          if (fsRow) foreignStudentMetrics = metricsFromForeignStudentsRow(fsRow);
         }
 
         if (cancelled) return;
@@ -316,7 +639,14 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
         setDatasetNote(row.notes?.trim() || '');
         setProxyDatasetNote(row.proxy_notes?.trim() || '');
         setCrimeRow(crimeFromMergedRow(row));
-        setOrdered(orderMetrics(wideRowToStatMetrics(row, iso3.toUpperCase(), proxy)));
+        setOrdered(
+          orderMetrics([
+            ...wideRowToStatMetrics(row, iso3.toUpperCase(), proxy),
+            ...macroMetrics,
+            ...expenditureMetrics,
+            ...foreignStudentMetrics,
+          ]),
+        );
         setError(null);
       } catch (e) {
         if (!cancelled) {
@@ -376,6 +706,8 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
     if (!ordered) return new Map<string, CountryStatMetric>();
     return new Map(ordered.map((r) => [r.metric, r]));
   }, [ordered]);
+
+  const statSections = useMemo(() => getStatSections(iso3), [iso3]);
 
   return (
     <div className="min-h-full bg-[#0a0a0a] font-mono text-neutral-200">
@@ -446,22 +778,99 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
             ) : null}
 
             <div className="flex flex-col gap-4">
-              {STATS_SECTIONS.map((section) => {
-                const rows = section.metrics
+              {statSections.map((section) => {
+                const leadingRows = section.metrics
                   .map((name) => metricsByName.get(name))
                   .filter((r): r is CountryStatMetric => r != null);
-                if (rows.length === 0) return null;
+
+                type NestedBlock =
+                  | { type: 'metrics'; sub: MetricSubsection; subRows: CountryStatMetric[] }
+                  | { type: 'germany_immigration'; sub: CustomSubsection };
+
+                const nestedBlocks: NestedBlock[] = [];
+                for (const sub of section.subsections ?? []) {
+                  if ('kind' in sub && sub.kind === 'germany_immigration') {
+                    if (iso3.toUpperCase() === 'DEU') {
+                      nestedBlocks.push({ type: 'germany_immigration', sub });
+                    }
+                    continue;
+                  }
+                  const metricSub = sub as MetricSubsection;
+                  const subRows = metricSub.metrics
+                    .map((name: string) => metricsByName.get(name))
+                    .filter((r): r is CountryStatMetric => r != null);
+                  if (subRows.length > 0) nestedBlocks.push({ type: 'metrics', sub: metricSub, subRows });
+                }
+
+                const showGermanyBirthPyramid = section.id === 'birth' && iso3.toUpperCase() === 'DEU';
+
+                if (leadingRows.length === 0 && nestedBlocks.length === 0 && !showGermanyBirthPyramid) return null;
+
+                const sectionCount =
+                  leadingRows.length +
+                  nestedBlocks.reduce((acc, b) => {
+                    if (b.type === 'germany_immigration') return acc + GERMANY_IMMIGRATION_SUBSECTION_COUNT;
+                    return acc + b.subRows.length;
+                  }, 0) +
+                  (showGermanyBirthPyramid ? 1 : 0);
+
                 return (
                   <CollapsibleFlagSection
                     key={section.id}
                     title={section.title}
-                    count={rows.length}
+                    count={sectionCount}
                     defaultOpen
                   >
-                    <div className={STAT_GRID}>
-                      {rows.map((row) => (
-                        <Fragment key={row.metric}>{renderStatTile(row)}</Fragment>
-                      ))}
+                    <div className="flex flex-col gap-4">
+                      {showGermanyBirthPyramid ? (
+                        <GermanyPopulationPyramid />
+                      ) : null}
+                      {leadingRows.length > 0 ? (
+                        <div className={STAT_GRID}>
+                          {leadingRows.map((row) => (
+                            <Fragment key={row.metric}>{renderStatTile(row)}</Fragment>
+                          ))}
+                        </div>
+                      ) : null}
+                      {nestedBlocks.map((block) =>
+                        block.type === 'germany_immigration' ? (
+                          <CollapsibleFlagSection
+                            key={block.sub.id}
+                            title={block.sub.title}
+                            count={GERMANY_IMMIGRATION_SUBSECTION_COUNT}
+                            defaultOpen
+                          >
+                            <div className="flex flex-col gap-4">
+                              <div className={STAT_GRID}>
+                                {GERMANY_IMMIGRATION_TOP_METRICS.map((metric) => {
+                                  const row = metricsByName.get(metric);
+                                  return row ? (
+                                    <Fragment key={metric}>
+                                      {renderStatTile(row, {
+                                        foreignStudentsPieCompact: metric === 'Foreign students by origin (pie)',
+                                      })}
+                                    </Fragment>
+                                  ) : null;
+                                })}
+                              </div>
+                              <GermanyImmigrationSection />
+                            </div>
+                          </CollapsibleFlagSection>
+                        ) : (
+                          <CollapsibleFlagSection
+                            key={block.sub.id}
+                            title={block.sub.title}
+                            count={block.subRows.length}
+                            defaultOpen
+                          >
+                            <div className={STAT_GRID}>
+                              {block.subRows.map((row) => (
+                                <Fragment key={row.metric}>{renderStatTile(row)}</Fragment>
+                              ))}
+                            </div>
+                          </CollapsibleFlagSection>
+                        ),
+                      )}
                     </div>
                   </CollapsibleFlagSection>
                 );

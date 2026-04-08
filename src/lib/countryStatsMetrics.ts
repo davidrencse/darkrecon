@@ -197,7 +197,7 @@ export function wideRowToStatMetrics(
       whiteNativePopNotes,
     ),
     tile(
-      'Non-European population',
+      'Foreign Population',
       isBlankOrNa(nonEuroPop) ? 'N/A' : fmtCount(nonEuroPop),
       nonEuroYear,
       geo,
@@ -242,13 +242,6 @@ export function wideRowToStatMetrics(
       geo,
       immigrantBirthUrl,
       immigrantBirthNotes,
-    ),
-    tile(
-      'Top immigrant countries',
-      row.top_immigrant_countries?.trim() ? row.top_immigrant_countries : 'N/A',
-      row.top_immigrant_countries_year,
-      geo,
-      row.top_immigrant_countries_source_url,
     ),
   ];
 }
