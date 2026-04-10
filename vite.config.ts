@@ -74,6 +74,30 @@ function syncDataCsvToPublic() {
         );
       }
 
+      const germanyBirthHealth = path.join(
+        __dirname,
+        'Assets',
+        'Data',
+        'Europe',
+        'Germany',
+        'germany_birth_health_indicators.csv',
+      );
+      if (fs.existsSync(germanyBirthHealth)) {
+        fs.copyFileSync(germanyBirthHealth, path.join(destDir, 'germany_birth_health_indicators.csv'));
+      }
+
+      const germanyMigrantCrime = path.join(
+        __dirname,
+        'Assets',
+        'Data',
+        'Europe',
+        'Germany',
+        'germany_migrant_crime_requested_metrics.csv',
+      );
+      if (fs.existsSync(germanyMigrantCrime)) {
+        fs.copyFileSync(germanyMigrantCrime, path.join(destDir, 'germany_migrant_crime_requested_metrics.csv'));
+      }
+
       const germanyDirPublic = path.join(__dirname, 'public', 'germany');
       fs.mkdirSync(germanyDirPublic, { recursive: true });
       const poppyra = path.join(__dirname, 'Assets', 'Data', 'Europe', 'Germany', 'poppyra.png');

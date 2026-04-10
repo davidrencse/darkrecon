@@ -11,20 +11,24 @@ import {
   metricsFromForeignStudentsRow,
   metricsFromGermanyForeignStudentsCsv,
 } from '../lib/foreignStudents';
+import { metricsFromGermanyBirthHealthCsv } from '../lib/germanyBirthHealthIndicators';
 import { crimeFromMergedRow, proxyFromMergedRow } from '../lib/mergedCountryStats';
 import type { CountryWideRow } from '../lib/parseCountriesWideCsv';
 import { indexCountriesByIso3, parseCountriesWideCsv } from '../lib/parseCountriesWideCsv';
 import { collectCrimeSourceUrls, CrimeMetricsSection } from './CrimeMetricsSection';
 import { CollapsibleFlagSection } from './CollapsibleFlagSection';
 import { GermanyImmigrationSection } from './GermanyImmigrationSection';
+import { GermanyMigrantCrimeSection } from './GermanyMigrantCrimeSection';
 import { GermanyPopulationPyramid } from './GermanyPopulationPyramid';
 import germanyForeignStudentsRaw from '../../Assets/Data/Europe/Germany/foreign_students.csv?raw';
+import germanyBirthHealthRaw from '../../Assets/Data/Europe/Germany/germany_birth_health_indicators.csv?raw';
 import fallbackForeignStudentsRaw from '../../Assets/Data/foreign_student_population_screenshot_countries.csv?raw';
 
 const MERGED_CSV_URL = '/data/centralized_merged_country_stats.csv';
 const EXPENDITURES_CSV_URL = '/data/expenditures.csv';
 const FOREIGN_STUDENTS_CSV_URL = '/data/foreign_student_population_screenshot_countries.csv';
 const FOREIGN_STUDENTS_GERMANY_CSV_URL = '/data/germany_foreign_students.csv';
+const GERMANY_BIRTH_HEALTH_CSV_URL = '/data/germany_birth_health_indicators.csv';
 const CORRUPTION_LOST_CSV_URL = '/data/corruption_money_lost_modeled_estimates.csv';
 const MACRO_INDICATORS_CSV_URL = '/data/countries_latest_inflation_unemployment_interest_with_real_median_wage.csv';
 
@@ -56,6 +60,15 @@ const METRIC_ORDER = [
   'Total birth rate',
   'White (native) birth rate',
   'Immigrant birth rate',
+  'Migrant background M:F ratio',
+  'Military-aged males (migrant background)',
+  'Births to foreign-born mothers',
+  'Infant mortality rate',
+  'Child mortality rate',
+  'Contraceptive use',
+  'Abortion rate',
+  'Teen birth rate',
+  'Mean age of mothers at childbirth',
 ] as const;
 
 function extractLeadingPercent(value: string): number | null {
@@ -511,7 +524,23 @@ function getStatSections(iso3: string): StatSectionDef[] {
     {
       id: 'birth',
       title: 'Birth rates',
-      metrics: ['Total birth rate', 'White (native) birth rate', 'Immigrant birth rate'],
+      metrics:
+        iso3.toUpperCase() === 'DEU'
+          ? [
+              'Total birth rate',
+              'White (native) birth rate',
+              'Immigrant birth rate',
+              'Migrant background M:F ratio',
+              'Military-aged males (migrant background)',
+              'Births to foreign-born mothers',
+              'Infant mortality rate',
+              'Child mortality rate',
+              'Contraceptive use',
+              'Abortion rate',
+              'Teen birth rate',
+              'Mean age of mothers at childbirth',
+            ]
+          : ['Total birth rate', 'White (native) birth rate', 'Immigrant birth rate'],
     },
   ];
 }
@@ -633,6 +662,19 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
           if (fsRow) foreignStudentMetrics = metricsFromForeignStudentsRow(fsRow);
         }
 
+        let birthHealthMetrics: CountryStatMetric[] = [];
+        if (iso3.toUpperCase() === 'DEU') {
+          let bhText = '';
+          try {
+            const bhRes = await fetch(GERMANY_BIRTH_HEALTH_CSV_URL);
+            if (bhRes.ok) bhText = await bhRes.text();
+          } catch {
+            bhText = '';
+          }
+          if (!bhText.trim()) bhText = germanyBirthHealthRaw;
+          birthHealthMetrics = metricsFromGermanyBirthHealthCsv(bhText);
+        }
+
         if (cancelled) return;
         const proxy = proxyFromMergedRow(row);
         setStatsRow(row);
@@ -645,6 +687,7 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
             ...macroMetrics,
             ...expenditureMetrics,
             ...foreignStudentMetrics,
+            ...birthHealthMetrics,
           ]),
         );
         setError(null);
@@ -880,10 +923,17 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
             <div className="mt-4">
               <CollapsibleFlagSection
                 title="Crime statistics"
-                count={crimeRow ? 8 : 0}
+                count={crimeRow ? (iso3.toUpperCase() === 'DEU' ? 14 : 8) : 0}
                 defaultOpen
               >
-                <CrimeMetricsSection crimeRow={crimeRow} />
+                <div className="flex flex-col gap-4">
+                  <CrimeMetricsSection crimeRow={crimeRow} />
+                  {iso3.toUpperCase() === 'DEU' ? (
+                    <CollapsibleFlagSection title="Migrant data" count={6} defaultOpen>
+                      <GermanyMigrantCrimeSection />
+                    </CollapsibleFlagSection>
+                  ) : null}
+                </div>
               </CollapsibleFlagSection>
             </div>
 

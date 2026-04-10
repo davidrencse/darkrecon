@@ -119,6 +119,7 @@ export function wideRowToStatMetrics(
 ): CountryStatMetric[] {
   const geo = row.country || proxy?.country || '';
   const isUk = iso3 === 'GBR';
+  const isDeu = iso3.toUpperCase() === 'DEU';
   const p = proxy;
 
   const whiteNativePop = p?.white_native_population ?? row.white_population;
@@ -146,6 +147,12 @@ export function wideRowToStatMetrics(
     whiteNativeBirthUrl = '';
     whiteNativeBirthNotes =
       'Dashboard value for the United Kingdom: 54% — White (native) births share, 2024 (user-specified for this view).';
+  } else if (isDeu) {
+    whiteNativeBirthValue = '1.23 (TFR)';
+    whiteNativeBirthYear = '2024';
+    whiteNativeBirthUrl = '';
+    whiteNativeBirthNotes =
+      'Germany (DEU): native (white) TFR 1.23, 2024 (user-specified for this view).';
   } else if (p) {
     whiteNativeBirthValue = formatProxyBirthDisplay(p.white_native_birth_rate, p.birth_metric);
     whiteNativeBirthYear = p.birth_data_year;
@@ -222,10 +229,15 @@ export function wideRowToStatMetrics(
     ),
     tile(
       'Total birth rate',
-      isBlankOrNa(row.total_birth_rate) ? 'N/A' : `${row.total_birth_rate} (TFR)`,
-      row.total_birth_rate_year,
+      isDeu
+        ? '1.35 (TFR)'
+        : isBlankOrNa(row.total_birth_rate)
+          ? 'N/A'
+          : `${row.total_birth_rate} (TFR)`,
+      isDeu ? '2024' : row.total_birth_rate_year,
       geo,
-      row.total_birth_rate_source_url,
+      isDeu ? '' : row.total_birth_rate_source_url,
+      isDeu ? 'Germany (DEU): total TFR 1.35, 2024 (user-specified for this view).' : '',
     ),
     tile(
       'White (native) birth rate',
@@ -243,6 +255,26 @@ export function wideRowToStatMetrics(
       immigrantBirthUrl,
       immigrantBirthNotes,
     ),
+    ...(isDeu
+      ? [
+          tile(
+            'Migrant background M:F ratio',
+            '1.0216',
+            '2024',
+            geo,
+            '',
+            'Male:female ratio for the migrant-background population; computed from 12.829 million men and 12.558 million women with migrant background in 2024.',
+          ),
+          tile(
+            'Military-aged males (migrant background)',
+            '4,853,000',
+            '2024',
+            geo,
+            '',
+            'Military-aged males of migrant background / immigration history proxy (user-specified for DEU dashboard).',
+          ),
+        ]
+      : []),
   ];
 }
 
