@@ -6,7 +6,11 @@ import { FLAG_FILENAMES } from 'virtual:flag-filenames';
  * Covers Vite caching the virtual module before these files existed — restart or HMR
  * still worked inconsistently without this merge.
  */
-const ALWAYS_INCLUDE_FLAGS = ['flag-of-Australia.png', 'flag-of-New-Zealand.png'] as const;
+const ALWAYS_INCLUDE_FLAGS = [
+  'flag-of-Australia.png',
+  'flag-of-New-Zealand.png',
+  'flag-of-South-Africa.png',
+] as const;
 
 function mergedFlagFilenames(): string[] {
   const seen = new Set<string>();

@@ -1,10 +1,13 @@
 import { useState, type ReactNode } from 'react';
+import { cn } from '../lib/utils';
 
 type CollapsibleFlagSectionProps = {
   title: string;
   count: number;
   defaultOpen?: boolean;
   children: ReactNode;
+  /** When true, section title is shown in all caps (e.g. Germany Government subsections). */
+  uppercaseTitle?: boolean;
 };
 
 export function CollapsibleFlagSection({
@@ -12,6 +15,7 @@ export function CollapsibleFlagSection({
   count,
   defaultOpen = true,
   children,
+  uppercaseTitle = false,
 }: CollapsibleFlagSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -21,7 +25,7 @@ export function CollapsibleFlagSection({
       className="group border border-[var(--line)] bg-[var(--card)]"
     >
       <summary className="flag-section-summary flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-white transition-colors hover:bg-[var(--card-hover)]">
-        <span className="min-w-0 truncate">{title}</span>
+        <span className={cn('min-w-0 truncate', uppercaseTitle && 'uppercase tracking-[0.06em]')}>{title}</span>
         <span className="flex shrink-0 items-center gap-2 text-[13px] font-normal text-neutral-500">
           <span>{count}</span>
           <span

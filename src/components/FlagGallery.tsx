@@ -35,7 +35,8 @@ export function FlagGallery({ onSelectFlag }: FlagGalleryProps) {
       <div className="mb-6 space-y-4">
         <FlagViewModeToggle value={viewMode} onChange={setViewMode} />
         <p className="text-[13px] leading-relaxed text-neutral-500">
-          {viewMode === 'continents' && 'Europe and Oceania — collapsible regions.'}
+          {viewMode === 'continents' &&
+            'Europe, North America, Africa, and Oceania — collapsible regions.'}
           {viewMode === 'eu' && 'European Union members and all other flags in this list.'}
           {viewMode === 'alphabet' && 'Grouped by the first letter of the country name.'}
         </p>

@@ -39,6 +39,7 @@ export const FLAG_ID_TO_ISO3: Record<string, string> = {
   'flag-of-Romania.png': 'ROU',
   'flag-of-Russia.png': 'RUS',
   'flag-of-Serbia.png': 'SRB',
+  'flag-of-South-Africa.png': 'ZAF',
   'flag-of-Slovakia.png': 'SVK',
   'flag-of-Slovenia.png': 'SVN',
   'flag-of-Spain.png': 'ESP',

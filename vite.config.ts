@@ -119,6 +119,32 @@ function syncDataCsvToPublic() {
       if (fs.existsSync(poppyra)) {
         fs.copyFileSync(poppyra, path.join(germanyDirPublic, 'poppyra.png'));
       }
+
+      const germanyGovCsv = path.join(
+        __dirname,
+        'Assets',
+        'Data',
+        'Europe',
+        'Germany',
+        'Government Section',
+        'germany_government_politics.csv',
+      );
+      if (fs.existsSync(germanyGovCsv)) {
+        fs.copyFileSync(germanyGovCsv, path.join(destDir, 'germany_government_politics.csv'));
+      }
+
+      const politicsPng = path.join(
+        __dirname,
+        'Assets',
+        'Data',
+        'Europe',
+        'Germany',
+        'Government Section',
+        'politics.png',
+      );
+      if (fs.existsSync(politicsPng)) {
+        fs.copyFileSync(politicsPng, path.join(germanyDirPublic, 'politics.png'));
+      }
     },
   };
 }

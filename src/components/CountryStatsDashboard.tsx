@@ -18,6 +18,7 @@ import { indexCountriesByIso3, parseCountriesWideCsv } from '../lib/parseCountri
 import { collectCrimeSourceUrls, CrimeMetricsSection } from './CrimeMetricsSection';
 import { CollapsibleFlagSection } from './CollapsibleFlagSection';
 import { GermanyImmigrationSection } from './GermanyImmigrationSection';
+import { GermanyGovernmentSection } from './GermanyGovernmentSection';
 import { GermanyMigrantCrimeSection } from './GermanyMigrantCrimeSection';
 import { GermanyPopulationPyramid } from './GermanyPopulationPyramid';
 import germanyForeignStudentsRaw from '../../Assets/Data/Europe/Germany/foreign_students.csv?raw';
@@ -938,6 +939,12 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                 </div>
               </CollapsibleFlagSection>
             </div>
+
+            {iso3.toUpperCase() === 'DEU' ? (
+              <div className="mt-4">
+                <GermanyGovernmentSection />
+              </div>
+            ) : null}
 
             <section className="mt-10 border border-neutral-800 bg-[#121212] p-4 sm:p-6">
               <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-500">
