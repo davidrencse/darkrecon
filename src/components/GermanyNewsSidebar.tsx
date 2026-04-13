@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import newsCsvRaw from '../../Assets/Data/Europe/Germany/news.csv?raw';
 import {
   GERMANY_NEWS_TOPIC_LABEL,
@@ -7,30 +7,73 @@ import {
   wordpressMshotsImageUrl,
   type GermanyNewsItem,
 } from '../lib/germanyNews';
+import {
+  queueGermanyNewsMicrolink,
+  resolveGermanyNewsImageViaMicrolink,
+} from '../lib/germanyNewsPreviewImage';
 
 export type GermanyNewsRailSection = {
   heading: string;
   items: GermanyNewsItem[];
 };
 
+function readCachedMicrolink(url: string): string | null {
+  try {
+    return sessionStorage.getItem(`darkrecon:germany-news-img:${url}`);
+  } catch {
+    return null;
+  }
+}
+
 function NewsThumb({ item }: { item: GermanyNewsItem }) {
+  const imgRef = useRef<HTMLImageElement>(null);
   const favicon = faviconUrlForHostname(item.hostname);
   const mshots = useMemo(() => wordpressMshotsImageUrl(item.url), [item.url]);
+  const hasBundledImage = Boolean(item.imageUrl?.trim());
+
+  const [microlinkImg, setMicrolinkImg] = useState<string | null>(() =>
+    hasBundledImage ? null : readCachedMicrolink(item.url),
+  );
+
+  useEffect(() => {
+    setMicrolinkImg(hasBundledImage ? null : readCachedMicrolink(item.url));
+  }, [hasBundledImage, item.url]);
+
+  useEffect(() => {
+    if (hasBundledImage) return;
+    if (microlinkImg) return;
+    const el = imgRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        obs.disconnect();
+        void queueGermanyNewsMicrolink(4000, () => resolveGermanyNewsImageViaMicrolink(item.url)).then((u) => {
+          if (u) setMicrolinkImg(u);
+        });
+      },
+      { root: null, rootMargin: '120px', threshold: 0.01 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasBundledImage, item.url, microlinkImg]);
 
   const candidates = useMemo(() => {
     const list: string[] = [];
     const csv = item.imageUrl?.trim();
     if (csv) list.push(csv);
+    if (microlinkImg) list.push(microlinkImg);
     list.push(mshots);
     list.push(favicon);
-    return list;
-  }, [item.imageUrl, mshots, favicon]);
+    return list.filter(Boolean);
+  }, [item.imageUrl, microlinkImg, mshots, favicon]);
 
+  const candidateKey = candidates.join('\0');
   const [tier, setTier] = useState(0);
 
   useLayoutEffect(() => {
     setTier(0);
-  }, [candidates]);
+  }, [candidateKey]);
 
   const src = candidates[Math.min(tier, candidates.length - 1)]!;
   const isFavicon = tier >= candidates.length - 1;
@@ -41,6 +84,7 @@ function NewsThumb({ item }: { item: GermanyNewsItem }) {
 
   return (
     <img
+      ref={imgRef}
       src={src}
       alt=""
       width={56}

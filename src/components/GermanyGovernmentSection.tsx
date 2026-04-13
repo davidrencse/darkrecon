@@ -10,6 +10,12 @@ import {
 } from '../lib/germanyGovernmentPolitics';
 import { GermanyBundestagSeatsVisualization } from './GermanyBundestagSeatsVisualization';
 import { GermanyPolicyCarousel } from './GermanyPolicyCarousel';
+import {
+  GOV_POLITICS_CARD_GRID,
+  GovStatCard,
+  renderMetricGroup,
+  splitUrls,
+} from './GermanyGovernmentPoliticsBlocks';
 import { CollapsibleFlagSection } from './CollapsibleFlagSection';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
@@ -21,171 +27,11 @@ const SUBSECTIONS = [
   { id: 'policies', title: 'Policies', key: 'Policies' as const },
   { id: 'polarization', title: 'Polarization', key: 'Polarization' as const },
   { id: 'citizenship', title: 'Citizenship', key: 'Citizenship' as const },
-  { id: 'labor-law', title: 'Labor law', key: 'Labor law' as const },
 ];
 
-const CARD_GRID = 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3';
-
-/** Metric titles and primary labels: all caps for government data cards. */
 const UC_TITLE = 'uppercase tracking-[0.05em]';
 const UC_LABEL = 'uppercase tracking-[0.04em]';
 const UC_META = 'uppercase tracking-[0.03em]';
-
-function splitUrls(urlField: string): string[] {
-  return String(urlField ?? '')
-    .split('|')
-    .map((u) => u.trim())
-    .filter(Boolean);
-}
-
-function formatValueDisplay(row: GermanyGovernmentPoliticsRow): string {
-  const v = row.value.trim();
-  if (!v) return 'N/A';
-  const unit = row.unit.trim().toLowerCase();
-  if (unit === 'percent' || unit.endsWith('percent')) {
-    const n = parseFloat(v.replace(/,/g, ''));
-    return Number.isFinite(n) ? `${n % 1 === 0 ? n.toFixed(0) : n.toFixed(1)}%` : v;
-  }
-  const asNum = Number(v.replace(/,/g, ''));
-  if (Number.isFinite(asNum) && String(v).includes(',')) {
-    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 }).format(asNum);
-  }
-  if (Number.isFinite(asNum) && /^[\d.]+$/.test(v)) {
-    return asNum % 1 !== 0 ? asNum.toLocaleString('en-US', { maximumFractionDigits: 4 }) : asNum.toLocaleString('en-US');
-  }
-  return v;
-}
-
-function metaParts(row: GermanyGovernmentPoliticsRow): string {
-  return [row.referenceYear ? `Year: ${row.referenceYear}` : null, row.unit ? `Unit: ${row.unit}` : null]
-    .filter(Boolean)
-    .join(' · ');
-}
-
-function GovStatCard({ row, title }: { row: GermanyGovernmentPoliticsRow; title?: string }) {
-  const urls = splitUrls(row.sourceUrl);
-  const label = title ?? row.metric;
-  const extra = [row.breakdown, row.submetric].filter(Boolean).join(' · ');
-  return (
-    <Card className="flex flex-col overflow-hidden border-neutral-800 bg-[#121212]">
-      <CardHeader className="space-y-0.5 p-3 pb-0">
-        <CardTitle className={`text-sm font-semibold leading-tight text-neutral-100 ${UC_TITLE}`}>{label}</CardTitle>
-        {extra ? (
-          <CardDescription className={`text-[10px] leading-snug text-neutral-300 ${UC_META}`}>{extra}</CardDescription>
-        ) : null}
-        <CardDescription className={`text-[10px] leading-snug text-neutral-500 ${UC_META}`}>{metaParts(row)}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-2 p-3 pt-2">
-        <p className="font-mono text-xl font-semibold tabular-nums tracking-tight text-white sm:text-2xl">
-          {formatValueDisplay(row)}
-        </p>
-        {urls.length > 0 ? (
-          <div className="space-y-0.5">
-            {urls.map((u, i) => (
-              <a
-                key={`${u}-${i}`}
-                href={u}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block font-mono text-[10px] leading-snug text-[var(--uk-accent)] hover:text-neutral-200 ${UC_META}`}
-              >
-                {row.sourceName ? (urls.length > 1 ? `${row.sourceName} (${i + 1})` : row.sourceName) : `Source ${i + 1}`}{' '}
-                ↗
-              </a>
-            ))}
-          </div>
-        ) : null}
-        {row.notes ? (
-          <details className="rounded-md border border-neutral-800/80 bg-neutral-950/40 px-2 py-1.5">
-            <summary className="cursor-pointer font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-500 hover:text-neutral-400">
-              Note
-            </summary>
-            <pre className="mt-1.5 max-h-40 overflow-y-auto whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-neutral-500">
-              {row.notes}
-            </pre>
-          </details>
-        ) : null}
-      </CardContent>
-    </Card>
-  );
-}
-
-function GovMetricTable({ metric, rows }: { metric: string; rows: GermanyGovernmentPoliticsRow[] }) {
-  const urls = splitUrls(rows[0]?.sourceUrl ?? '');
-  const sourceName = rows[0]?.sourceName ?? '';
-  const notes = rows.map((r) => r.notes).filter(Boolean);
-  return (
-    <Card className="overflow-hidden border-neutral-800 bg-[#121212] sm:col-span-2 lg:col-span-3">
-      <CardHeader className="p-3 pb-2">
-        <CardTitle className={`text-sm font-semibold text-neutral-100 ${UC_TITLE}`}>{metric}</CardTitle>
-        {rows[0]?.referenceYear ? (
-          <CardDescription className={`text-[10px] text-neutral-500 ${UC_META}`}>
-            Reference year: {rows[0].referenceYear}
-          </CardDescription>
-        ) : null}
-      </CardHeader>
-      <CardContent className="space-y-3 p-3 pt-0">
-        <div className="overflow-x-auto rounded border border-neutral-800">
-          <table className="w-full min-w-[280px] border-collapse font-mono text-[11px]">
-            <thead>
-              <tr className="border-b border-neutral-800 bg-neutral-950/60 text-left text-[10px] uppercase tracking-[0.1em] text-neutral-500">
-                <th className="px-3 py-2 font-medium">Breakdown</th>
-                <th className="px-3 py-2 font-medium text-right">Value</th>
-                <th className="px-3 py-2 font-medium">Unit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={i} className="border-b border-neutral-800/80 last:border-0">
-                  <td className={`px-3 py-2 text-neutral-200 ${UC_LABEL}`}>
-                    {(r.breakdown || r.submetric || '—').trim() || '—'}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums text-white">{formatValueDisplay(r)}</td>
-                  <td className={`px-3 py-2 text-neutral-400 ${UC_META}`}>{r.unit || '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {urls.length > 0 ? (
-          <div className="space-y-0.5">
-            {urls.map((u, i) => (
-              <a
-                key={`${u}-${i}`}
-                href={u}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block font-mono text-[10px] text-[var(--uk-accent)] hover:text-neutral-200 ${UC_META}`}
-              >
-                {sourceName ? (urls.length > 1 ? `${sourceName} (${i + 1})` : sourceName) : `Source ${i + 1}`} ↗
-              </a>
-            ))}
-          </div>
-        ) : null}
-        {notes.length > 0 ? (
-          <details className="rounded-md border border-neutral-800/80 bg-neutral-950/40 px-2 py-1.5">
-            <summary className="cursor-pointer font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-500">
-              Notes
-            </summary>
-            <pre className="mt-1.5 max-h-36 overflow-y-auto whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-neutral-500">
-              {notes.join('\n\n')}
-            </pre>
-          </details>
-        ) : null}
-      </CardContent>
-    </Card>
-  );
-}
-
-function renderMetricGroup(rows: GermanyGovernmentPoliticsRow[]) {
-  const first = rows[0]!;
-  const multi =
-    rows.length > 1 ||
-    Boolean(first.breakdown?.trim()) ||
-    Boolean(first.submetric?.trim());
-  if (multi) return <GovMetricTable key={first.metric} metric={first.metric} rows={rows} />;
-  return <GovStatCard key={first.metric} row={first} />;
-}
 
 function OverviewBlock({ rows }: { rows: GermanyGovernmentPoliticsRow[] }) {
   const byMetric = useMemo(() => {
@@ -304,7 +150,7 @@ function ParliamentGroups({ groups }: { groups: GermanyGovernmentPoliticsRow[][]
     }
     out.push(<Fragment key={g[0]!.metric}>{renderMetricGroup(g)}</Fragment>);
   }
-  return <div className={CARD_GRID}>{out}</div>;
+  return <div className={GOV_POLITICS_CARD_GRID}>{out}</div>;
 }
 
 export function GermanyGovernmentSection() {
@@ -360,7 +206,7 @@ export function GermanyGovernmentSection() {
               ) : key === 'Policies' ? (
                 <GermanyPolicyCarousel policyRows={sorted} />
               ) : (
-                <div className={CARD_GRID}>{groups.map((g) => renderMetricGroup(g))}</div>
+                <div className={GOV_POLITICS_CARD_GRID}>{groups.map((g) => renderMetricGroup(g))}</div>
               )}
             </CollapsibleFlagSection>
           );
@@ -368,8 +214,8 @@ export function GermanyGovernmentSection() {
 
         <p className={`font-mono text-[10px] leading-relaxed text-neutral-600 ${UC_META}`}>
           Primary table:{' '}
-          <code className="text-neutral-500">germany_government_politics.csv</code> (Government Section). Values,
-          years, and notes follow that file.
+          <code className="text-neutral-500">germany_government_politics.csv</code> (Government and Economic labor rows).
+          Values, years, and notes follow that file.
         </p>
       </div>
     </CollapsibleFlagSection>

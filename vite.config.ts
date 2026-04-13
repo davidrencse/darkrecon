@@ -150,6 +150,18 @@ function syncDataCsvToPublic() {
       if (fs.existsSync(germanyNewsCsv)) {
         fs.copyFileSync(germanyNewsCsv, path.join(destDir, 'news.csv'));
       }
+
+      const germanyLaborStats = path.join(
+        __dirname,
+        'Assets',
+        'Data',
+        'Europe',
+        'Germany',
+        'germany_labor_statistics.csv',
+      );
+      if (fs.existsSync(germanyLaborStats)) {
+        fs.copyFileSync(germanyLaborStats, path.join(destDir, 'germany_labor_statistics.csv'));
+      }
     },
   };
 }

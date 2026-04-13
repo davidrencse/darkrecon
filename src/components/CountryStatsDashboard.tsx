@@ -26,6 +26,8 @@ import {
   type GermanyNewsRailSection,
 } from './GermanyNewsSidebar';
 import { bucketGermanyNewsItems } from '../lib/germanyNews';
+import { GERMANY_LABOR_INCOME_GROUP_COUNT } from '../lib/germanyGovernmentPolitics';
+import { GermanyLaborIncomeSection } from './GermanyLaborIncomeSection';
 import { GermanyPopulationPyramid } from './GermanyPopulationPyramid';
 import germanyForeignStudentsRaw from '../../Assets/Data/Europe/Germany/foreign_students.csv?raw';
 import germanyBirthHealthRaw from '../../Assets/Data/Europe/Germany/germany_birth_health_indicators.csv?raw';
@@ -495,7 +497,9 @@ function getPopulationSectionMetrics(iso3: string): string[] {
 }
 
 type MetricSubsection = { id: string; title: string; metrics: readonly string[] };
-type CustomSubsection = { id: string; title: string; kind: 'germany_immigration' };
+type CustomSubsection =
+  | { id: string; title: string; kind: 'germany_immigration' }
+  | { id: string; title: string; kind: 'germany_labor_income' };
 type SubsectionDef = MetricSubsection | CustomSubsection;
 
 type StatSectionDef = {
@@ -518,6 +522,15 @@ function getStatSections(iso3: string): StatSectionDef[] {
           title: 'Government spending',
           metrics: GOVERNMENT_SPENDING_METRICS,
         },
+        ...(isDeu
+          ? [
+              {
+                id: 'labor_income_distribution',
+                title: 'Labor & Income Distribution',
+                kind: 'germany_labor_income' as const,
+              },
+            ]
+          : []),
       ],
     },
     {
@@ -867,13 +880,20 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
 
                 type NestedBlock =
                   | { type: 'metrics'; sub: MetricSubsection; subRows: CountryStatMetric[] }
-                  | { type: 'germany_immigration'; sub: CustomSubsection };
+                  | { type: 'germany_immigration'; sub: CustomSubsection }
+                  | { type: 'germany_labor_income'; sub: CustomSubsection };
 
                 const nestedBlocks: NestedBlock[] = [];
                 for (const sub of section.subsections ?? []) {
                   if ('kind' in sub && sub.kind === 'germany_immigration') {
                     if (iso3.toUpperCase() === 'DEU') {
                       nestedBlocks.push({ type: 'germany_immigration', sub });
+                    }
+                    continue;
+                  }
+                  if ('kind' in sub && sub.kind === 'germany_labor_income') {
+                    if (iso3.toUpperCase() === 'DEU') {
+                      nestedBlocks.push({ type: 'germany_labor_income', sub });
                     }
                     continue;
                   }
@@ -892,6 +912,7 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                   leadingRows.length +
                   nestedBlocks.reduce((acc, b) => {
                     if (b.type === 'germany_immigration') return acc + GERMANY_IMMIGRATION_SUBSECTION_COUNT;
+                    if (b.type === 'germany_labor_income') return acc + GERMANY_LABOR_INCOME_GROUP_COUNT;
                     return acc + b.subRows.length;
                   }, 0) +
                   (showGermanyBirthPyramid ? 1 : 0);
@@ -937,6 +958,15 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                               </div>
                               <GermanyImmigrationSection />
                             </div>
+                          </CollapsibleFlagSection>
+                        ) : block.type === 'germany_labor_income' ? (
+                          <CollapsibleFlagSection
+                            key={block.sub.id}
+                            title={block.sub.title}
+                            count={GERMANY_LABOR_INCOME_GROUP_COUNT}
+                            defaultOpen
+                          >
+                            <GermanyLaborIncomeSection />
                           </CollapsibleFlagSection>
                         ) : (
                           <CollapsibleFlagSection

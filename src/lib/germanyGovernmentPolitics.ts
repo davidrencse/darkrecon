@@ -1,4 +1,5 @@
 import { parseCsvRows } from './csv';
+import { GERMANY_LABOR_STATISTICS_FILE_GROUP_COUNT } from './germanyLaborStatistics';
 
 export type GermanyGovernmentPoliticsRow = {
   section: string;
@@ -14,7 +15,43 @@ export type GermanyGovernmentPoliticsRow = {
   notes: string;
 };
 
-const SUBSECTION_ORDER = ['Overview', 'Parliament', 'Policies', 'Polarization', 'Citizenship', 'Labor law'] as const;
+const SUBSECTION_ORDER = ['Overview', 'Parliament', 'Policies', 'Polarization', 'Citizenship'] as const;
+
+/** Newer CSV layout (moved under economic stats). */
+export const ECONOMIC_STATS_SECTION = 'Economic';
+export const LABOR_INCOME_SUBSECTION = 'Labor & Income Distribution';
+
+/** Original CSV layout — many `/data/` copies still use this; we match both. */
+export const LEGACY_LABOR_GOVERNMENT_SECTION = 'Government';
+export const LEGACY_LABOR_SUBSECTION = 'Labor law';
+
+export function isLaborIncomeDistributionRow(r: GermanyGovernmentPoliticsRow): boolean {
+  const sec = r.section.trim().toLowerCase();
+  const sub = r.subsection.trim();
+  if (sec === ECONOMIC_STATS_SECTION.toLowerCase() && sub === LABOR_INCOME_SUBSECTION) return true;
+  if (sec === LEGACY_LABOR_GOVERNMENT_SECTION.toLowerCase() && sub.toLowerCase() === LEGACY_LABOR_SUBSECTION.toLowerCase()) {
+    return true;
+  }
+  return false;
+}
+
+export const LABOR_INCOME_METRIC_ORDER = [
+  'employment rates by nationality',
+  'welfare dependency by nationality/status',
+  'social assistance recipients by citizenship',
+  'benefit fraud cases',
+  'illegal employment cases',
+  'minimum wage enforcement cases',
+  'work-permit grants',
+  'Blue Card approvals',
+  'student visa conversions to work permits',
+] as const;
+
+/**
+ * Collapsible section count: government-politics labor rows (clustered) + germany_labor_statistics.csv groups.
+ */
+export const GERMANY_LABOR_INCOME_GROUP_COUNT =
+  LABOR_INCOME_METRIC_ORDER.length + GERMANY_LABOR_STATISTICS_FILE_GROUP_COUNT;
 
 export const GOVERNMENT_METRIC_ORDER: Record<(typeof SUBSECTION_ORDER)[number], string[]> = {
   Overview: [
@@ -70,17 +107,6 @@ export const GOVERNMENT_METRIC_ORDER: Record<(typeof SUBSECTION_ORDER)[number], 
     'applications for naturalization',
     'approval / rejection rates',
   ],
-  'Labor law': [
-    'employment rates by nationality',
-    'welfare dependency by nationality/status',
-    'social assistance recipients by citizenship',
-    'benefit fraud cases',
-    'illegal employment cases',
-    'minimum wage enforcement cases',
-    'work-permit grants',
-    'Blue Card approvals',
-    'student visa conversions to work permits',
-  ],
 };
 
 function headerIndexMap(headerRow: string[]): Map<string, number> {
@@ -128,6 +154,26 @@ export function parseGermanyGovernmentPoliticsCsv(raw: string): GermanyGovernmen
 
 export function governmentRowsForGermany(rows: GermanyGovernmentPoliticsRow[]): GermanyGovernmentPoliticsRow[] {
   return rows.filter((r) => r.section.trim().toLowerCase() === 'government');
+}
+
+function laborIncomeMetricOrderIndex(metric: string): number {
+  const m = metric.trim();
+  const i = (LABOR_INCOME_METRIC_ORDER as readonly string[]).indexOf(m);
+  return i === -1 ? 999 + m.localeCompare('') : i;
+}
+
+/** Labor & Income Distribution UI: same metrics, whether CSV uses legacy Government/Labor law or Economic/Labor & Income Distribution. */
+export function laborIncomeDistributionRows(rows: GermanyGovernmentPoliticsRow[]): GermanyGovernmentPoliticsRow[] {
+  const filtered = rows.filter(isLaborIncomeDistributionRow);
+  return filtered.sort((a, b) => {
+    const d = laborIncomeMetricOrderIndex(a.metric) - laborIncomeMetricOrderIndex(b.metric);
+    if (d !== 0) return d;
+    const bl = (a.breakdown || a.submetric || '').localeCompare(b.breakdown || b.submetric || '', undefined, {
+      sensitivity: 'base',
+    });
+    if (bl !== 0) return bl;
+    return a.value.localeCompare(b.value);
+  });
 }
 
 function metricOrderIndex(subsection: string, metric: string): number {
