@@ -310,6 +310,16 @@ function ParliamentGroups({ groups }: { groups: GermanyGovernmentPoliticsRow[][]
 function CitizenshipGroups({ groups }: { groups: GermanyGovernmentPoliticsRow[][] }) {
   const naturalizationsGroup = groups.find((g) => g[0]!.metric.trim().toLowerCase() === 'naturalizations per year');
   const restGroups = groups.filter((g) => g[0]!.metric.trim().toLowerCase() !== 'naturalizations per year');
+  const priorNationalityGroup = restGroups.find(
+    (g) => g[0]!.metric.trim().toLowerCase() === 'naturalizations by prior nationality',
+  );
+  const applicationsGroup = restGroups.find(
+    (g) => g[0]!.metric.trim().toLowerCase() === 'applications for naturalization',
+  );
+  const remainingGroups = restGroups.filter((g) => {
+    const metric = g[0]!.metric.trim().toLowerCase();
+    return metric !== 'naturalizations by prior nationality' && metric !== 'applications for naturalization';
+  });
 
   const avgAgeRow: GermanyGovernmentPoliticsRow = {
     section: 'Government',
@@ -339,6 +349,34 @@ function CitizenshipGroups({ groups }: { groups: GermanyGovernmentPoliticsRow[][
     notes: '',
   };
 
+  const naturalizationRefusalRateRow: GermanyGovernmentPoliticsRow = {
+    section: 'Government',
+    subsection: 'Citizenship',
+    metric: 'Naturalization Refusal Rate',
+    submetric: '',
+    breakdown: '',
+    value: '28.4',
+    unit: 'percent',
+    referenceYear: '',
+    sourceName: '',
+    sourceUrl: '',
+    notes: '',
+  };
+
+  const avgProcessingTimeRow: GermanyGovernmentPoliticsRow = {
+    section: 'Government',
+    subsection: 'Citizenship',
+    metric: 'Average Processing Time',
+    submetric: '',
+    breakdown: '',
+    value: '21',
+    unit: 'months',
+    referenceYear: '',
+    sourceName: '',
+    sourceUrl: '',
+    notes: '',
+  };
+
   const ageGroupData = [
     { group: 'Under 20 years', count: 77590, fill: '#60a5fa' },
     { group: '20-45 years', count: 164235, fill: '#34d399' },
@@ -363,8 +401,8 @@ function CitizenshipGroups({ groups }: { groups: GermanyGovernmentPoliticsRow[][
             title="Naturalizations per year"
           />
         ) : null}
-        <GovStatCard row={avgAgeRow} title="Average Age of New Citizens" />
         <GovStatCard row={naturalizationRateRow} title="Naturalization Rate" />
+        <GovStatCard row={avgProcessingTimeRow} title="Average Processing Time" />
       </div>
 
       <Card className="lg:col-span-1">
@@ -411,7 +449,20 @@ function CitizenshipGroups({ groups }: { groups: GermanyGovernmentPoliticsRow[][
         </CardContent>
       </Card>
 
-      <div className={GOV_POLITICS_CARD_GRID}>{restGroups.map((g) => renderMetricGroup(g))}</div>
+      {priorNationalityGroup ? <div className={GOV_POLITICS_CARD_GRID}>{renderMetricGroup(priorNationalityGroup)}</div> : null}
+
+      <div className={GOV_POLITICS_CARD_GRID}>
+        {applicationsGroup ? (
+          <GovStatCard
+            row={{ ...applicationsGroup[0]!, breakdown: '', submetric: '' }}
+            title="Applications for naturalization"
+          />
+        ) : null}
+        <GovStatCard row={avgAgeRow} title="Average Age of New Citizens" />
+        <GovStatCard row={naturalizationRefusalRateRow} title="Naturalization Refusal Rate" />
+      </div>
+
+      <div className={GOV_POLITICS_CARD_GRID}>{remainingGroups.map((g) => renderMetricGroup(g))}</div>
     </div>
   );
 }
@@ -471,7 +522,6 @@ export function GermanyGovernmentSection({
       title="Government"
       count={outerCount}
       defaultOpen
-      uppercaseTitle
       headerControls={headerControls}
       collapseSignal={collapseSignal}
       expandSignal={expandSignal}
@@ -485,7 +535,7 @@ export function GermanyGovernmentSection({
           const sorted = rowsForSubsection(germanyRows, key);
           const groups = clusterRowsByMetric(sorted);
           if (groups.length === 0) return null;
-          const subsectionCount = key === 'Citizenship' ? groups.length + 3 : groups.length;
+          const subsectionCount = key === 'Citizenship' ? groups.length + 5 : groups.length;
           return (
             <CollapsibleFlagSection
               key={id}

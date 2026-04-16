@@ -119,6 +119,33 @@ export function GermanyPopulationPyramid() {
             Female
           </span>
         </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="rounded-md border border-line bg-surface-metric/80 px-3 py-2 shadow-inset">
+            <div className="font-sans text-[10px] uppercase tracking-[0.18em] text-neutral-500">Total</div>
+            <div className="mt-1 font-sans text-sm font-semibold tabular-nums text-neutral-100">
+              83,491,249
+            </div>
+            <div className="mt-0.5 font-sans text-[10px] text-neutral-500">As of 30 June 2025</div>
+          </div>
+
+          <div className="rounded-md border border-line bg-surface-metric/80 px-3 py-2 shadow-inset">
+            <div className="font-sans text-[10px] uppercase tracking-[0.18em] text-neutral-500">Male</div>
+            <div className="mt-1 flex items-baseline gap-2 font-sans tabular-nums text-sm font-semibold text-neutral-100">
+              <span>41,202,173</span>
+              <span className="text-neutral-500">49.4%</span>
+            </div>
+          </div>
+
+          <div className="rounded-md border border-line bg-surface-metric/80 px-3 py-2 shadow-inset">
+            <div className="font-sans text-[10px] uppercase tracking-[0.18em] text-neutral-500">Female</div>
+            <div className="mt-1 flex items-baseline gap-2 font-sans tabular-nums text-sm font-semibold text-neutral-100">
+              <span>42,289,076</span>
+              <span className="text-neutral-500">50.6%</span>
+            </div>
+          </div>
+        </div>
+
         <p className="mt-2 font-sans text-[10px] leading-relaxed text-neutral-500">
           Source data: germany_2025_population_by_age_and_gender.csv (Germany, 2025 age-group population by sex).
         </p>

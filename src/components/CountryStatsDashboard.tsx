@@ -1028,8 +1028,6 @@ const DRAGGABLE_TOP_SECTION_ORDER = ['economic', 'politics', 'population', 'heal
 export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashboardProps) {
   const [ordered, setOrdered] = useState<CountryStatMetric[] | null>(null);
   const [statsRow, setStatsRow] = useState<CountryWideRow | null>(null);
-  const [datasetNote, setDatasetNote] = useState('');
-  const [proxyDatasetNote, setProxyDatasetNote] = useState('');
   const [crimeRow, setCrimeRow] = useState<CountryWideRow | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -1129,8 +1127,6 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
         if (cancelled) return;
         const proxy = proxyFromMergedRow(row);
         setStatsRow(row);
-        setDatasetNote(row.notes?.trim() || '');
-        setProxyDatasetNote(row.proxy_notes?.trim() || '');
         setCrimeRow(crimeFromMergedRow(row));
         setOrdered(
           orderMetrics([
@@ -1343,28 +1339,7 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
 
         {ordered && ordered.length > 0 ? (
           <>
-            <p className="mb-4 max-w-2xl font-sans text-[11px] leading-relaxed text-neutral-500">
-              Data: <code className="text-neutral-400">centralized_merged_country_stats.csv</code> (economics,
-              demographics proxies, and crime baselines in one file). Crime baseline audit:{' '}
-              <code className="text-neutral-400">crime_baseline_replacement_audit.csv</code>. Open card notes for
-              definitions.
-            </p>
-            {datasetNote ? (
-              <details className="mb-3 max-w-2xl rounded-md border border-line bg-surface-metric shadow-card p-3 font-sans text-[10px] text-neutral-500">
-                <summary className="cursor-pointer text-neutral-400 hover:text-neutral-200">
-                  Main CSV methodology note
-                </summary>
-                <p className="mt-2 leading-relaxed">{datasetNote}</p>
-              </details>
-            ) : null}
-            {proxyDatasetNote ? (
-              <details className="mb-6 max-w-2xl rounded-md border border-line bg-surface-metric shadow-card p-3 font-sans text-[10px] text-neutral-500">
-                <summary className="cursor-pointer text-neutral-400 hover:text-neutral-200">
-                  Proxy demographics &amp; births note (merged CSV)
-                </summary>
-                <p className="mt-2 leading-relaxed">{proxyDatasetNote}</p>
-              </details>
-            ) : null}
+            {/* Removed top dataset/methodology notes to reduce visual density while preserving behavior. */}
 
             <div className="mb-3 flex justify-end">
               <button
