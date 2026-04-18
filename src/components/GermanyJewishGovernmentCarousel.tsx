@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import jewishGovernmentCsvRaw from '../../Assets/Data/Europe/Germany/jewish.csv?raw';
+import starImage from '../../Assets/star.png';
 import {
   parseGermanyJewishGovernmentCsv,
   type GermanyJewishGovernmentPerson,
@@ -17,9 +18,6 @@ function ProfileCard({ person }: { person: GermanyJewishGovernmentPerson }) {
         <CardDescription className={`text-[10px] text-neutral-500 ${UC_META}`}>{person.office || 'Office not listed'}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 p-3 pt-0">
-        <p className="font-sans text-[11px] text-neutral-300">
-          <span className={`inline-block min-w-12 text-neutral-500 ${UC_META}`}>Years:</span> {person.years || '—'}
-        </p>
         <p className="font-sans text-[11px] leading-relaxed text-neutral-300">{person.exactWikipediaWording || '—'}</p>
         <div className="grid grid-cols-1 gap-1 text-[10px] text-neutral-500 sm:grid-cols-[120px_1fr]">
           <p className={UC_META}>Language</p>
@@ -83,7 +81,14 @@ export function GermanyJewishGovernmentCarousel() {
         </div>
       </div>
 
-      <ProfileCard person={current} />
+      <div className="flex flex-col gap-3 md:flex-row md:items-stretch">
+        <div className="md:min-w-0 md:flex-1">
+          <ProfileCard person={current} />
+        </div>
+        <div className="flex items-center justify-center rounded-md border border-white/[0.08] bg-black/20 p-2 md:w-[168px] md:flex-none">
+          <img src={starImage} alt="Star icon" className="h-20 w-auto object-contain opacity-95" loading="lazy" />
+        </div>
+      </div>
       <p className={`mt-2 font-sans text-[10px] text-neutral-600 ${UC_META}`}>
         Source: <code className="text-neutral-500">Assets/Data/Europe/Germany/jewish.csv</code>
       </p>

@@ -47,6 +47,7 @@ import {
 } from './GermanyPoliticsLeftismSection';
 import { GermanyLaborIncomeSection } from './GermanyLaborIncomeSection';
 import { GermanyPopulationPyramid } from './GermanyPopulationPyramid';
+import { GermanyDaxCarousel } from './GermanyDaxCarousel';
 import germanyForeignStudentsRaw from '../../Assets/Data/Europe/Germany/foreign_students.csv?raw';
 import germanyBirthHealthRaw from '../../Assets/Data/Europe/Germany/germany_birth_health_indicators.csv?raw';
 import fallbackForeignStudentsRaw from '../../Assets/Data/foreign_student_population_screenshot_countries.csv?raw';
@@ -1320,6 +1321,12 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                 : 'mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10'
             }
           >
+        {isGermany ? (
+          <div className="mb-8">
+            <GermanyDaxCarousel />
+          </div>
+        ) : null}
+
         {error ? (
           <p className="rounded-md border border-line bg-surface-metric shadow-card p-6 font-sans text-sm text-red-400/90">
             {error}

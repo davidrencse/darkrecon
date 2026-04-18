@@ -3,7 +3,7 @@ import { Badge } from './ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from './ui/chart';
 import { Separator } from './ui/separator';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 
 type CrimeBoxConfig = {
   id: string;
@@ -200,11 +200,14 @@ function CrimeBaselineLatestChart({ row }: { row: CountryWideRow }) {
                           />
                         }
                       />
-                      <Bar
-                        dataKey="value"
-                        fill={(entry) => (entry.period === 'Baseline' ? 'var(--color-baseline)' : 'var(--color-latest)')}
-                        radius={[4, 4, 0, 0]}
-                      />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {data.map((row) => (
+                          <Cell
+                            key={row.period}
+                            fill={row.period === 'Baseline' ? 'var(--color-baseline)' : 'var(--color-latest)'}
+                          />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
