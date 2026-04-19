@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import germanyGovernmentCsvRaw from '../../Assets/Data/Europe/Germany/Government Section/germany_government_politics.csv?raw';
+import { GERMANY_IMMIGRATION_POLICIES_SUBSECTION_COUNT } from '../data/germanyImmigrationPolicies';
 import {
   clusterRowsByMetric,
   countGovernmentSectionStats,
@@ -10,6 +11,7 @@ import {
 } from '../lib/germanyGovernmentPolitics';
 import { GermanyBundestagSeatsVisualization } from './GermanyBundestagSeatsVisualization';
 import { GermanyJewishGovernmentCarousel } from './GermanyJewishGovernmentCarousel';
+import { GermanyImmigrationPoliciesSection } from './GermanyImmigrationPoliciesSection';
 import { GermanyPolicyCarousel } from './GermanyPolicyCarousel';
 import {
   GOV_POLITICS_CARD_GRID,
@@ -595,7 +597,13 @@ export function GermanyGovernmentSection({
           const groups = clusterRowsByMetric(sorted);
           if (groups.length === 0) return null;
           const subsectionCount =
-            key === 'Citizenship' ? groups.length + 5 : key === 'Parliament' ? groups.length + 1 : groups.length;
+            key === 'Citizenship'
+              ? groups.length + 5
+              : key === 'Parliament'
+                ? groups.length + 1
+                : key === 'Policies'
+                  ? groups.length + GERMANY_IMMIGRATION_POLICIES_SUBSECTION_COUNT
+                  : groups.length;
           return (
             <CollapsibleFlagSection
               key={id}
@@ -609,7 +617,19 @@ export function GermanyGovernmentSection({
               {key === 'Parliament' ? (
                 <ParliamentGroups groups={groups} />
               ) : key === 'Policies' ? (
-                <GermanyPolicyCarousel policyRows={sorted} />
+                <div className="flex flex-col gap-3">
+                  <GermanyPolicyCarousel policyRows={sorted} />
+                  <CollapsibleFlagSection
+                    title="Immigration Policies"
+                    count={GERMANY_IMMIGRATION_POLICIES_SUBSECTION_COUNT}
+                    defaultOpen
+                    uppercaseTitle
+                    collapseSignal={collapseSignal}
+                    expandSignal={expandSignal}
+                  >
+                    <GermanyImmigrationPoliciesSection />
+                  </CollapsibleFlagSection>
+                </div>
               ) : key === 'Citizenship' ? (
                 <CitizenshipGroups groups={groups} />
               ) : (

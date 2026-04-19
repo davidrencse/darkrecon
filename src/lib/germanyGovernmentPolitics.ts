@@ -1,3 +1,4 @@
+import { GERMANY_IMMIGRATION_POLICIES_SUBSECTION_COUNT } from '../data/germanyImmigrationPolicies';
 import { parseCsvRows } from './csv';
 import { GERMANY_LABOR_STATISTICS_FILE_GROUP_COUNT } from './germanyLaborStatistics';
 
@@ -215,7 +216,8 @@ export function countGovernmentSectionStats(rows: GermanyGovernmentPoliticsRow[]
   let n = 4; // overview: head + coalition + party count + chart
   for (const sub of SUBSECTION_ORDER) {
     if (sub === 'Overview') continue;
-    n += clusterRowsByMetric(rowsForSubsection(g, sub)).length;
+    const clusters = clusterRowsByMetric(rowsForSubsection(g, sub)).length;
+    n += sub === 'Policies' ? clusters + GERMANY_IMMIGRATION_POLICIES_SUBSECTION_COUNT : clusters;
   }
   return n;
 }

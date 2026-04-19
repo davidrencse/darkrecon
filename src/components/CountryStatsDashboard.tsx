@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { FlagEntry } from '../types/flag';
 import type { CountryStatMetric } from '../types/countryStats';
 import { collectSourceUrlsFromWideRow, wideRowToStatMetrics } from '../lib/countryStatsMetrics';
@@ -22,7 +22,8 @@ import type { CountryWideRow } from '../lib/parseCountriesWideCsv';
 import { indexCountriesByIso3, parseCountriesWideCsv } from '../lib/parseCountriesWideCsv';
 import { collectCrimeSourceUrls, CrimeMetricsSection } from './CrimeMetricsSection';
 import { CollapsibleFlagSection } from './CollapsibleFlagSection';
-import { ChartContainer, type ChartConfig } from './ui/chart';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from './ui/chart';
 import { GermanyImmigrationSection } from './GermanyImmigrationSection';
 import { GermanyGovernmentSection } from './GermanyGovernmentSection';
 import { GermanyMigrantCrimeSection } from './GermanyMigrantCrimeSection';
@@ -46,6 +47,10 @@ import {
   GERMANY_POLITICS_LEFTISM_GROUP_COUNT,
 } from './GermanyPoliticsLeftismSection';
 import { GermanyLaborIncomeSection } from './GermanyLaborIncomeSection';
+import {
+  GermanyEconomicStructuralSection,
+  GERMANY_ECONOMIC_STRUCTURAL_GROUP_COUNT,
+} from './GermanyEconomicStructuralSection';
 import { GermanyPopulationPyramid } from './GermanyPopulationPyramid';
 import { GermanyDaxCarousel } from './GermanyDaxCarousel';
 import germanyForeignStudentsRaw from '../../Assets/Data/Europe/Germany/foreign_students.csv?raw';
@@ -223,46 +228,57 @@ function MetricTile({
   largeValue,
   accent,
   extra,
+  minHeightClass,
 }: {
   row: CountryStatMetric;
   largeValue?: boolean;
   accent?: boolean;
   extra?: ReactNode;
+  minHeightClass?: string;
 }) {
   const na = isUnavailable(row.value);
   return (
     <article
       className={
         accent
-          ? 'flex min-h-[148px] flex-col rounded-md border border-[var(--uk-accent-border)] bg-[var(--uk-accent-surface)] p-4 shadow-card ring-1 ring-[var(--uk-accent-dim)] sm:p-5'
-          : 'flex min-h-[148px] flex-col rounded-md border border-line bg-surface-metric p-4 shadow-card sm:p-5'
+          ? `flex ${minHeightClass ?? 'min-h-[148px]'} flex-col rounded-md border border-[var(--uk-accent-border)] bg-[var(--uk-accent-surface)] p-4 shadow-card ring-1 ring-[var(--uk-accent-dim)] sm:p-5`
+          : `flex ${minHeightClass ?? 'min-h-[148px]'} flex-col rounded-md border border-line bg-surface-metric p-4 shadow-card sm:p-5`
       }
     >
       <p className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-500">
         {row.metric}
       </p>
       <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <p
-          className={
-            largeValue
-              ? `min-w-0 flex-1 font-sans tabular-nums text-2xl font-semibold leading-none tracking-tight sm:text-3xl lg:text-4xl ${na ? 'text-neutral-600' : 'text-neutral-100'}`
-              : `min-w-0 flex-1 font-sans tabular-nums text-lg font-medium leading-snug sm:text-xl ${na ? 'text-neutral-600' : 'text-neutral-100'}`
-          }
-        >
-          {na ? 'N/A' : row.value}
-        </p>
+        <div className="min-w-0 flex-1">
+          <p
+            className={
+              largeValue
+                ? `font-sans tabular-nums text-2xl font-semibold leading-none tracking-tight sm:text-3xl lg:text-4xl ${na ? 'text-neutral-600' : 'text-neutral-100'}`
+                : `font-sans tabular-nums text-lg font-medium leading-snug sm:text-xl ${na ? 'text-neutral-600' : 'text-neutral-100'}`
+            }
+          >
+            {na ? 'N/A' : row.value}
+          </p>
+          {row.value_subtitle && !na ? (
+            <p className="mt-1.5 font-sans text-[10px] font-medium leading-snug text-neutral-500">
+              {row.value_subtitle}
+            </p>
+          ) : null}
+        </div>
         {extra ? <div className="shrink-0">{extra}</div> : null}
       </div>
-      <MetaLine row={row} />
-      {row.source_url ? (
-        <div className="mt-2">
-          <SourceLinks
-            url={row.source_url}
-            className="inline-flex w-fit items-center gap-1 font-sans text-[10px] text-[var(--uk-accent)] hover:text-neutral-200"
-          />
-        </div>
-      ) : null}
-      <NoteBlock text={row.notes} />
+      <div className="mt-auto">
+        <MetaLine row={row} />
+        {row.source_url ? (
+          <div className="mt-2">
+            <SourceLinks
+              url={row.source_url}
+              className="inline-flex w-fit items-center gap-1 font-sans text-[10px] text-[var(--uk-accent)] hover:text-neutral-200"
+            />
+          </div>
+        ) : null}
+        <NoteBlock text={row.notes} />
+      </div>
     </article>
   );
 }
@@ -895,6 +911,7 @@ type MetricSubsection = { id: string; title: string; metrics: readonly string[] 
 type CustomSubsection =
   | { id: string; title: string; kind: 'germany_immigration' }
   | { id: string; title: string; kind: 'germany_labor_income' }
+  | { id: string; title: string; kind: 'germany_economic_structural' }
   | { id: string; title: string; kind: 'germany_health_basic' }
   | { id: string; title: string; kind: 'germany_lgbt_stats' }
   | { id: string; title: string; kind: 'germany_politics_leftism' }
@@ -927,6 +944,11 @@ function getStatSections(iso3: string): StatSectionDef[] {
                 id: 'labor_income_distribution',
                 title: 'Labor & Income Distribution',
                 kind: 'germany_labor_income' as const,
+              },
+              {
+                id: 'fiscal_structural_snapshot',
+                title: 'Fiscal Snapshot',
+                kind: 'germany_economic_structural' as const,
               },
             ]
           : []),
@@ -979,6 +1001,110 @@ const STAT_GRID = 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3';
 
 type RenderStatTileOpts = { foreignStudentsPieCompact?: boolean; iso3?: string };
 
+type GermanyGdpRow = { year: string; gdp: number; gdpPerCapita: number };
+
+const GERMANY_GDP_SERIES: readonly GermanyGdpRow[] = [
+  { year: '2015', gdp: 3425, gdpPerCapita: 41911 },
+  { year: '2016', gdp: 3537, gdpPerCapita: 42961 },
+  { year: '2017', gdp: 3765, gdpPerCapita: 45527 },
+  { year: '2018', gdp: 4055, gdpPerCapita: 48916 },
+  { year: '2019', gdp: 3960, gdpPerCapita: 47624 },
+  { year: '2020', gdp: 3941, gdpPerCapita: 47380 },
+  { year: '2021', gdp: 4355, gdpPerCapita: 52266 },
+  { year: '2022', gdp: 4082, gdpPerCapita: 49686 },
+  { year: '2023', gdp: 4456, gdpPerCapita: 54343 },
+  { year: '2024', gdp: 4686, gdpPerCapita: 56104 },
+  { year: '2025', gdp: 5014, gdpPerCapita: 60000 },
+];
+
+function GermanyHoverSeriesTile({
+  row,
+  accent,
+  seriesKey,
+  title,
+  yTickFormatter,
+  tooltipFormatter,
+  minHeightClass,
+}: {
+  row: CountryStatMetric;
+  accent?: boolean;
+  seriesKey: 'gdp' | 'gdpPerCapita';
+  title: string;
+  yTickFormatter: (n: number) => string;
+  tooltipFormatter: (v: number) => string;
+  minHeightClass?: string;
+}) {
+  const config: ChartConfig = {
+    [seriesKey]: { label: title, color: 'var(--uk-accent)' },
+  };
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
+    >
+      <MetricTile row={row} largeValue accent={accent} minHeightClass={minHeightClass} />
+      {hovered ? (
+        <div className="pointer-events-none absolute inset-0 z-40">
+          <Card className="flex h-full flex-col border-line bg-surface-metric shadow-card ring-1 ring-white/[0.04]">
+            <CardHeader className="p-3 pb-1.5">
+              <CardTitle className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                {title} (2015–2025)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-1 flex-col justify-center p-3 pt-0">
+              <ChartContainer config={config} className="h-[132px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={GERMANY_GDP_SERIES}>
+                    <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                    <XAxis
+                      dataKey="year"
+                      tick={{ fill: 'rgba(163,163,163,0.9)', fontSize: 10, fontFamily: 'ui-sans-serif' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tickFormatter={(v) => yTickFormatter(Number(v))}
+                      tick={{ fill: 'rgba(163,163,163,0.9)', fontSize: 10, fontFamily: 'ui-sans-serif' }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={44}
+                    />
+                    <ChartTooltip
+                      cursor={{ stroke: 'rgba(255,255,255,0.1)' }}
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value) => tooltipFormatter(Number(value))}
+                          labelFormatter={(label) => `Year ${String(label)}`}
+                          className="rounded-md"
+                        />
+                      }
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey={seriesKey}
+                      stroke="var(--uk-accent)"
+                      fill="var(--uk-accent)"
+                      fillOpacity={0.12}
+                      strokeWidth={2}
+                      isAnimationActive={false}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+              <p className="mt-1 text-center font-sans text-[9px] leading-snug text-neutral-600">2025 is estimated</p>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function renderStatTile(row: CountryStatMetric, opts?: RenderStatTileOpts): ReactNode {
   if (row.metric === 'Immigration welfare spending' && opts?.iso3?.toUpperCase() === 'DEU') {
     return <ImmigrationWelfareGermanyTile row={row} />;
@@ -1002,9 +1128,34 @@ function renderStatTile(row: CountryStatMetric, opts?: RenderStatTileOpts): Reac
     return <MetricTile row={row} largeValue />;
   }
   if (row.metric === 'GDP') {
+    if (opts?.iso3?.toUpperCase() === 'DEU') {
+      return (
+        <GermanyHoverSeriesTile
+          row={row}
+          accent
+          seriesKey="gdp"
+          title="GDP (USD billions)"
+          yTickFormatter={(n) => `${Math.round(n / 1000)}T`}
+          tooltipFormatter={(v) => `${v.toLocaleString()}B`}
+          minHeightClass="min-h-[240px]"
+        />
+      );
+    }
     return <MetricTile row={row} largeValue accent />;
   }
   if (row.metric === 'GDP per capita') {
+    if (opts?.iso3?.toUpperCase() === 'DEU') {
+      return (
+        <GermanyHoverSeriesTile
+          row={row}
+          seriesKey="gdpPerCapita"
+          title="GDP per capita (USD)"
+          yTickFormatter={(n) => `${Math.round(n / 1000)}k`}
+          tooltipFormatter={(v) => `$${Math.round(v).toLocaleString()}`}
+          minHeightClass="min-h-[240px]"
+        />
+      );
+    }
     return <MetricTile row={row} largeValue />;
   }
   if (row.metric === 'Immigrant birth rate') {
@@ -1376,6 +1527,7 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                   | { type: 'metrics'; sub: MetricSubsection; subRows: CountryStatMetric[] }
                   | { type: 'germany_immigration'; sub: CustomSubsection }
                   | { type: 'germany_labor_income'; sub: CustomSubsection }
+                  | { type: 'germany_economic_structural'; sub: CustomSubsection }
                   | { type: 'germany_health_basic'; sub: CustomSubsection }
                   | { type: 'germany_lgbt_stats'; sub: CustomSubsection }
                   | { type: 'germany_politics_leftism'; sub: CustomSubsection }
@@ -1392,6 +1544,12 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                   if ('kind' in sub && sub.kind === 'germany_labor_income') {
                     if (iso3.toUpperCase() === 'DEU') {
                       nestedBlocks.push({ type: 'germany_labor_income', sub });
+                    }
+                    continue;
+                  }
+                  if ('kind' in sub && sub.kind === 'germany_economic_structural') {
+                    if (iso3.toUpperCase() === 'DEU') {
+                      nestedBlocks.push({ type: 'germany_economic_structural', sub });
                     }
                     continue;
                   }
@@ -1438,6 +1596,7 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                   nestedBlocks.reduce((acc, b) => {
                     if (b.type === 'germany_immigration') return acc + GERMANY_IMMIGRATION_SUBSECTION_COUNT;
                     if (b.type === 'germany_labor_income') return acc + GERMANY_LABOR_INCOME_GROUP_COUNT;
+                    if (b.type === 'germany_economic_structural') return acc + GERMANY_ECONOMIC_STRUCTURAL_GROUP_COUNT;
                     if (b.type === 'germany_health_basic') return acc + GERMANY_HEALTH_BASIC_GROUP_COUNT;
                     if (b.type === 'germany_lgbt_stats') return acc + GERMANY_LGBT_SECTION_GROUP_COUNT;
                     if (b.type === 'germany_politics_leftism') return acc + GERMANY_POLITICS_LEFTISM_GROUP_COUNT;
@@ -1509,6 +1668,17 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                               expandSignal={expandSignal}
                           >
                             <GermanyLaborIncomeSection />
+                          </CollapsibleFlagSection>
+                        ) : block.type === 'germany_economic_structural' ? (
+                          <CollapsibleFlagSection
+                            key={block.sub.id}
+                            title={block.sub.title}
+                            count={GERMANY_ECONOMIC_STRUCTURAL_GROUP_COUNT}
+                            defaultOpen
+                            collapseSignal={collapseSignal}
+                            expandSignal={expandSignal}
+                          >
+                            <GermanyEconomicStructuralSection />
                           </CollapsibleFlagSection>
                         ) : block.type === 'germany_health_basic' ? (
                           <CollapsibleFlagSection

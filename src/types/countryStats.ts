@@ -2,6 +2,8 @@
 export type CountryStatMetric = {
   metric: string;
   value: string;
+  /** Optional second line under the main value (e.g. GNI share). */
+  value_subtitle?: string;
   reference_period: string;
   geography_used: string;
   source_name: string;

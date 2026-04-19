@@ -128,7 +128,8 @@ function germanyExpenditurePieMetric(
 function foreignAidMetricGermany(): CountryStatMetric {
   return {
     metric: 'Foreign Aid',
-    value: "€126 billion · 0.67% of Germany's GNI",
+    value: '€126 billion',
+    value_subtitle: "0.67% of Germany's GNI",
     reference_period: 'OECD development co-operation profile',
     geography_used: 'Germany',
     source_name: '',
