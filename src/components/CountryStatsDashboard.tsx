@@ -330,7 +330,7 @@ function ImmigrationWelfareGermanyTile({ row }: { row: CountryStatMetric }) {
 /** Health → Birth rates: Destatis / OECD-style childhood weight metrics (DE). */
 function ChildhoodObesityBirthRatesTile({ row }: { row: CountryStatMetric }) {
   return (
-    <article className="flex min-h-[148px] flex-col rounded-md border border-line bg-surface-metric shadow-card p-4 sm:p-5">
+    <article className="flex min-h-[188px] flex-col rounded-md border border-line bg-surface-metric shadow-card p-4 sm:p-5">
       <p className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-500">
         Childhood overweight and obesity
       </p>
@@ -1229,6 +1229,31 @@ function GermanyBirthsLineChartTile() {
   );
 }
 
+function GermanyBirthRatesEducationTile() {
+  return (
+    <Card className="overflow-hidden border-line bg-surface-metric shadow-card lg:col-span-2 lg:h-[152px] lg:self-start">
+      <CardHeader className="space-y-0.5 p-3 pb-1.5">
+        <CardTitle className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
+          Fertility by mothers&apos; education
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-1 p-3 pt-0 font-sans text-[11px] leading-relaxed text-neutral-300">
+        <p>
+          Low education (no upper secondary): <span className="font-semibold text-neutral-100">1.68</span> children
+          per woman
+        </p>
+        <p>
+          Medium education: <span className="font-semibold text-neutral-100">1.41</span> children per woman
+        </p>
+        <p>
+          High education (university): <span className="font-semibold text-neutral-100">1.12</span> children per
+          woman
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function GermanyHoverSeriesTile({
   row,
   accent,
@@ -1822,6 +1847,7 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
 
                 const sectionCount =
                   leadingTileCount +
+                  (section.id === 'population' && iso3.toUpperCase() === 'DEU' ? 1 : 0) +
                   nestedBlocks.reduce((acc, b) => {
                     if (b.type === 'germany_immigration') return acc + GERMANY_IMMIGRATION_SUBSECTION_COUNT;
                     if (b.type === 'germany_labor_income') return acc + GERMANY_LABOR_INCOME_GROUP_COUNT;
@@ -1853,6 +1879,9 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                       expandSignal={expandSignal}
                     >
                     <div className="flex flex-col gap-4">
+                      {section.id === 'population' && iso3.toUpperCase() === 'DEU' ? (
+                        <GermanyPopulationPyramid />
+                      ) : null}
                       {leadingRows.length > 0 ? (
                         <div className={STAT_GRID}>
                           {section.id === 'population' && iso3.toUpperCase() === 'DEU'
@@ -1980,7 +2009,6 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                               {block.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU' ? (
                                 <>
                                   <GermanyBirthsLineChartTile />
-                                  <GermanyPopulationPyramid />
                                 </>
                               ) : null}
                               {block.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU' ? (
@@ -2010,6 +2038,7 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                                             })}
                                           </div>
                                         ) : null}
+                                        <GermanyBirthRatesEducationTile />
                                       </div>
                                     );
                                   })()}
