@@ -7,6 +7,10 @@ const UC_LABEL = 'uppercase tracking-[0.04em]';
 const UC_META = 'uppercase tracking-[0.03em]';
 
 export const GOV_POLITICS_CARD_GRID = 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3';
+const METRIC_SUBTITLES: Record<string, string> = {
+  'Concurrent mental health comorbidities in youth referred for care':
+    'When a young person is referred to a gender clinic in Germany, there is a very high chance (around 70%) they are already struggling with depression, anxiety, autism, trauma, or other serious mental health conditions at the same time.',
+};
 
 export function splitUrls(urlField: string): string[] {
   return String(urlField ?? '')
@@ -91,10 +95,12 @@ export function GovMetricTable({ metric, rows }: { metric: string; rows: Germany
   const urls = splitUrls(rows[0]?.sourceUrl ?? '');
   const sourceName = rows[0]?.sourceName ?? '';
   const notes = rows.map((r) => r.notes).filter(Boolean);
+  const subtitle = METRIC_SUBTITLES[metric];
   return (
     <Card className="overflow-hidden border-line bg-surface-metric sm:col-span-2 lg:col-span-3">
       <CardHeader className="p-3 pb-2">
         <CardTitle className={`text-sm font-semibold text-neutral-100 ${UC_TITLE}`}>{metric}</CardTitle>
+        {subtitle ? <CardDescription className="text-[11px] normal-case text-neutral-300">{subtitle}</CardDescription> : null}
         {rows[0]?.referenceYear ? (
           <CardDescription className={`text-[10px] text-neutral-500 ${UC_META}`}>
             Reference year: {rows[0].referenceYear}

@@ -143,11 +143,6 @@ export function GermanyHealthBasicSection() {
           <GovStatCard key={`health-overview-oecd-${i}-${row.metric}`} row={row} />
         ))}
       </div>
-      <p className="font-sans text-[10px] leading-relaxed text-neutral-600 uppercase tracking-[0.03em]">
-        Source: <code className="text-neutral-500">germany_health_statistics_basic.csv</code>
-        {' · '}
-        Additional indicators: OECD Health at a Glance 2025 (Germany country note / country page).
-      </p>
     </div>
   );
 }

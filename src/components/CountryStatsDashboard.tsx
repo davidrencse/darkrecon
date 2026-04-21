@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { FlagEntry } from '../types/flag';
 import type { CountryStatMetric } from '../types/countryStats';
 import { collectSourceUrlsFromWideRow, wideRowToStatMetrics } from '../lib/countryStatsMetrics';
@@ -229,20 +229,24 @@ function MetricTile({
   accent,
   extra,
   minHeightClass,
+  fixedHeightClass,
+  clipOverflow,
 }: {
   row: CountryStatMetric;
   largeValue?: boolean;
   accent?: boolean;
   extra?: ReactNode;
   minHeightClass?: string;
+  fixedHeightClass?: string;
+  clipOverflow?: boolean;
 }) {
   const na = isUnavailable(row.value);
   return (
     <article
       className={
         accent
-          ? `flex ${minHeightClass ?? 'min-h-[148px]'} flex-col rounded-md border border-[var(--uk-accent-border)] bg-[var(--uk-accent-surface)] p-4 shadow-card ring-1 ring-[var(--uk-accent-dim)] sm:p-5`
-          : `flex ${minHeightClass ?? 'min-h-[148px]'} flex-col rounded-md border border-line bg-surface-metric p-4 shadow-card sm:p-5`
+          ? `flex ${fixedHeightClass ?? minHeightClass ?? 'min-h-[148px]'} ${clipOverflow ? 'overflow-hidden' : ''} flex-col rounded-md border border-[var(--uk-accent-border)] bg-[var(--uk-accent-surface)] p-4 shadow-card ring-1 ring-[var(--uk-accent-dim)] sm:p-5`
+          : `flex ${fixedHeightClass ?? minHeightClass ?? 'min-h-[148px]'} ${clipOverflow ? 'overflow-hidden' : ''} flex-col rounded-md border border-line bg-surface-metric p-4 shadow-card sm:p-5`
       }
     >
       <p className="font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-neutral-500">
@@ -999,7 +1003,7 @@ function getStatSections(iso3: string): StatSectionDef[] {
 
 const STAT_GRID = 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3';
 
-type RenderStatTileOpts = { foreignStudentsPieCompact?: boolean; iso3?: string };
+type RenderStatTileOpts = { foreignStudentsPieCompact?: boolean; iso3?: string; compactBirthRates?: boolean };
 
 type GermanyGdpRow = { year: string; gdp: number; gdpPerCapita: number };
 
@@ -1016,6 +1020,214 @@ const GERMANY_GDP_SERIES: readonly GermanyGdpRow[] = [
   { year: '2024', gdp: 4686, gdpPerCapita: 56104 },
   { year: '2025', gdp: 5014, gdpPerCapita: 60000 },
 ];
+
+type GermanyBirthsSeriesRow = {
+  year: string;
+  totalLiveBirths: number;
+  birthsGermanMothers: number;
+  birthsForeignMothers: number;
+  shareGermanMothersPct: number;
+  isEstimate?: boolean;
+};
+
+type GermanyBirthRatesExtraCard = {
+  title: string;
+  value: string;
+  details?: string;
+  source?: string;
+  category?: 'diseases';
+};
+
+const GERMANY_TOTAL_BIRTHS_SERIES: readonly GermanyBirthsSeriesRow[] = [
+  { year: '2000', totalLiveBirths: 766999, birthsGermanMothers: 629000, birthsForeignMothers: 137999, shareGermanMothersPct: 82.0 },
+  { year: '2001', totalLiveBirths: 734475, birthsGermanMothers: 602000, birthsForeignMothers: 132475, shareGermanMothersPct: 82.0 },
+  { year: '2002', totalLiveBirths: 719250, birthsGermanMothers: 589000, birthsForeignMothers: 130250, shareGermanMothersPct: 81.9 },
+  { year: '2003', totalLiveBirths: 706721, birthsGermanMothers: 579000, birthsForeignMothers: 127721, shareGermanMothersPct: 81.9 },
+  { year: '2004', totalLiveBirths: 705622, birthsGermanMothers: 577000, birthsForeignMothers: 128622, shareGermanMothersPct: 81.8 },
+  { year: '2005', totalLiveBirths: 692239, birthsGermanMothers: 565000, birthsForeignMothers: 127239, shareGermanMothersPct: 81.6 },
+  { year: '2006', totalLiveBirths: 672724, birthsGermanMothers: 548000, birthsForeignMothers: 124724, shareGermanMothersPct: 81.5 },
+  { year: '2007', totalLiveBirths: 684862, birthsGermanMothers: 557000, birthsForeignMothers: 127862, shareGermanMothersPct: 81.3 },
+  { year: '2008', totalLiveBirths: 682514, birthsGermanMothers: 554000, birthsForeignMothers: 128514, shareGermanMothersPct: 81.2 },
+  { year: '2009', totalLiveBirths: 665126, birthsGermanMothers: 539000, birthsForeignMothers: 126126, shareGermanMothersPct: 81.0 },
+  { year: '2010', totalLiveBirths: 677947, birthsGermanMothers: 540000, birthsForeignMothers: 137947, shareGermanMothersPct: 79.7 },
+  { year: '2011', totalLiveBirths: 662685, birthsGermanMothers: 527000, birthsForeignMothers: 135685, shareGermanMothersPct: 79.5 },
+  { year: '2012', totalLiveBirths: 673544, birthsGermanMothers: 533000, birthsForeignMothers: 140544, shareGermanMothersPct: 79.1 },
+  { year: '2013', totalLiveBirths: 682069, birthsGermanMothers: 537000, birthsForeignMothers: 145069, shareGermanMothersPct: 78.7 },
+  { year: '2014', totalLiveBirths: 714966, birthsGermanMothers: 558000, birthsForeignMothers: 156966, shareGermanMothersPct: 78.0 },
+  { year: '2015', totalLiveBirths: 738819, birthsGermanMothers: 579000, birthsForeignMothers: 159819, shareGermanMothersPct: 78.4 },
+  { year: '2016', totalLiveBirths: 792141, birthsGermanMothers: 610000, birthsForeignMothers: 182141, shareGermanMothersPct: 77.0 },
+  { year: '2017', totalLiveBirths: 784901, birthsGermanMothers: 600000, birthsForeignMothers: 184901, shareGermanMothersPct: 76.4 },
+  { year: '2018', totalLiveBirths: 787523, birthsGermanMothers: 595000, birthsForeignMothers: 192523, shareGermanMothersPct: 75.6 },
+  { year: '2019', totalLiveBirths: 779000, birthsGermanMothers: 590000, birthsForeignMothers: 189000, shareGermanMothersPct: 75.7 },
+  { year: '2020', totalLiveBirths: 773144, birthsGermanMothers: 582000, birthsForeignMothers: 191144, shareGermanMothersPct: 75.3 },
+  { year: '2021', totalLiveBirths: 795492, birthsGermanMothers: 590000, birthsForeignMothers: 205492, shareGermanMothersPct: 74.2 },
+  { year: '2022', totalLiveBirths: 738819, birthsGermanMothers: 545000, birthsForeignMothers: 193819, shareGermanMothersPct: 73.8 },
+  { year: '2023', totalLiveBirths: 692989, birthsGermanMothers: 500670, birthsForeignMothers: 192319, shareGermanMothersPct: 72.3 },
+  { year: '2024', totalLiveBirths: 677117, birthsGermanMothers: 482796, birthsForeignMothers: 194321, shareGermanMothersPct: 71.3 },
+  { year: '2025', totalLiveBirths: 660000, birthsGermanMothers: 465000, birthsForeignMothers: 195000, shareGermanMothersPct: 70.5, isEstimate: true },
+] as const;
+
+const GERMANY_BIRTH_RATES_EXTRA_CARDS: readonly GermanyBirthRatesExtraCard[] = [
+  { category: 'diseases', title: 'Cardiovascular diseases', value: '~13 million affected', details: 'Leading cause of death/disability. Ischaemic heart disease alone causes about 441,000 new cases per year.' },
+  { category: 'diseases', title: 'Cancer (all types)', value: '~4.9 million (5-year prevalence)', details: '~606,000 new cases per year; very high burden.' },
+  { category: 'diseases', title: 'Chronic back pain / musculoskeletal', value: '~15–20 million (lifetime)', details: 'Extremely common; low back pain is a top cause of disability.' },
+  { category: 'diseases', title: 'Diabetes (mainly Type 2)', value: '~6.05–8.5 million', details: 'Prevalence around 8.6%; expected to rise sharply.' },
+  { category: 'diseases', title: 'Depression / mental health disorders', value: '~8–10 million (lifetime)', details: 'Very high burden, especially anxiety and depression.' },
+  { category: 'diseases', title: 'Obesity (adults)', value: '~14–18 million', details: '17% self-reported obese; measured overweight/obese rates are much higher.' },
+  { category: 'diseases', title: 'COPD', value: '~5–6 million', details: 'Major cause of death/disability; strongly linked to smoking.' },
+  { category: 'diseases', title: 'Hypertension', value: '~20–25 million', details: 'One of the most widespread risk factors.' },
+  { category: 'diseases', title: 'Alzheimer’s / dementia', value: '~1.8–2.0 million', details: 'Rising rapidly due to aging population.' },
+  { category: 'diseases', title: 'HIV', value: '~97,000 living with HIV', details: 'Stable burden; around 2,000 new infections per year.' },
+  { title: 'Smoking Rate (Daily)', value: '14.6%', details: 'Adults 15+, 2023–2025.' },
+  { title: 'Autism cases in Germany', value: '~630,000–835,000 people', details: 'Roughly 0.76%–1% of the population.' },
+  { title: 'Water quality', value: 'Excellent / Very good', source: 'German Environment Agency (Umweltbundesamt) and Drinking Water Ordinance (TrinkwV) 2023–2026.' },
+  { title: 'Air quality (AQI)', value: 'National average ~52 (2025–2026)', details: 'Major cities are typically ~35–55; main pollutant is PM2.5 with occasional NO2 spikes.', source: 'IQAir Germany 2025–2026 country report and real-time AQI data.' },
+  { title: 'General happiness', value: 'Rank #17 globally (score ~6.88/10)', source: 'World Happiness Report 2026 (Gallup / UN Sustainable Development Solutions Network).' },
+  { title: 'Environmental ranking', value: 'EPI 2024 rank #3 (score 74.5)', details: 'Strong in biodiversity/protected areas/marine conservation; weaker in some air/climate policy implementation.', source: 'Yale Environmental Performance Index 2024.' },
+  { title: 'Walking modal share', value: '~25%–30% nationally', details: 'Metropolitan areas ~30%–32%; average walking trip is about 0.9 km.', source: 'Mobility in Germany (MiD) 2023 survey with 2025 updates.' },
+  { title: 'Cycling modal share', value: '~11%–17% nationally', details: 'Often 15%–25% in cities; about 40%–45% cycle at least occasionally.', source: 'Mobility in Germany (MiD) 2023 and National Cycling Plan 3.0 (2025 data).' },
+] as const;
+
+function GermanyBirthRatesExtraCardTile({ card }: { card: GermanyBirthRatesExtraCard }) {
+  return (
+    <Card className="flex h-full min-h-[132px] flex-col overflow-hidden border-line bg-surface-metric shadow-card">
+      <CardHeader className="space-y-1 p-3 pb-1.5">
+        <CardTitle className="font-sans text-sm font-semibold leading-tight text-neutral-100 uppercase tracking-[0.05em]">
+          {card.title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col gap-2 p-3 pt-0">
+        <p className="font-sans text-xl font-semibold tabular-nums tracking-tight text-white sm:text-2xl">{card.value}</p>
+        {card.details ? (
+          <p className="font-sans text-[10px] leading-relaxed text-neutral-400 uppercase tracking-[0.03em]">{card.details}</p>
+        ) : null}
+        {card.source ? (
+          <p className="font-sans text-[10px] leading-relaxed text-neutral-500 uppercase tracking-[0.03em]">Source: {card.source}</p>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function GermanyBirthRatesExtrasGrid() {
+  return (
+    <div className="col-span-full">
+      <div className="grid grid-cols-1 auto-rows-fr items-start gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {GERMANY_BIRTH_RATES_EXTRA_CARDS.map((card) => (
+          <GermanyBirthRatesExtraCardTile key={card.title} card={card} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GermanyBirthsLineChartTile() {
+  const chartConfig: ChartConfig = {
+    totalLiveBirths: { label: 'Total live births', color: '#f59e0b' },
+    birthsGermanMothers: { label: 'Births to German mothers', color: '#22c55e' },
+    birthsForeignMothers: { label: 'Births to foreign mothers', color: '#60a5fa' },
+  };
+
+  return (
+    <Card className="col-span-full border-line bg-surface-metric shadow-card">
+      <CardHeader className="space-y-1 p-4 pb-2 sm:p-5 sm:pb-3">
+        <CardTitle className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+          Total births per year (Germany)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 p-4 pt-0 sm:p-5 sm:pt-0">
+        <ChartContainer config={chartConfig} className="h-[320px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={GERMANY_TOTAL_BIRTHS_SERIES} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+              <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+              <XAxis
+                dataKey="year"
+                tick={{ fill: 'rgba(163,163,163,0.9)', fontSize: 10, fontFamily: 'ui-sans-serif' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`}
+                tick={{ fill: 'rgba(163,163,163,0.9)', fontSize: 10, fontFamily: 'ui-sans-serif' }}
+                axisLine={false}
+                tickLine={false}
+                width={52}
+              />
+              <ChartTooltip
+                cursor={{ stroke: 'rgba(255,255,255,0.12)' }}
+                content={
+                  <ChartTooltipContent
+                    className="rounded-md"
+                    formatter={(value, name, item: any) => {
+                      const numericValue = Number(value);
+                      const row = item?.payload as GermanyBirthsSeriesRow | undefined;
+                      const pretty = Number.isFinite(numericValue) ? Math.round(numericValue).toLocaleString('en-US') : '—';
+                      const label = String(name);
+                      if (label === 'birthsGermanMothers') {
+                        return [`${pretty}${row ? ` (${row.shareGermanMothersPct.toFixed(1)}%)` : ''}`, 'German mothers'];
+                      }
+                      if (label === 'birthsForeignMothers') {
+                        return [`${pretty}`, 'Foreign mothers'];
+                      }
+                      return [`${pretty}`, ' Total live births'];
+                    }}
+                    labelFormatter={(label, payload: any) => {
+                      const row = payload?.[0]?.payload as GermanyBirthsSeriesRow | undefined;
+                      return row?.isEstimate ? `Year ${String(label)} (estimate)` : `Year ${String(label)}`;
+                    }}
+                  />
+                }
+              />
+              <Legend
+                wrapperStyle={{ fontSize: '11px', color: 'rgba(212,212,212,0.9)' }}
+                iconType="line"
+              />
+              <Line
+                type="monotone"
+                dataKey="totalLiveBirths"
+                name="Total live births"
+                stroke="#f59e0b"
+                strokeWidth={2.5}
+                dot={{ r: 2 }}
+                activeDot={{ r: 4 }}
+                isAnimationActive={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="birthsGermanMothers"
+                name="Births to German mothers"
+                stroke="#22c55e"
+                strokeWidth={2.5}
+                dot={{ r: 2 }}
+                activeDot={{ r: 4 }}
+                isAnimationActive={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="birthsForeignMothers"
+                name="Births to foreign mothers"
+                stroke="#60a5fa"
+                strokeWidth={2.5}
+                dot={{ r: 2 }}
+                activeDot={{ r: 4 }}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+        <p className="font-sans text-[10px] leading-relaxed text-neutral-500">
+          German mothers are defined by citizenship at time of birth (includes naturalized immigrants and descendants).
+          Share declines from about 82% in the early 2000s to 71.3% in 2024. 2025 values are estimated from the
+          continuing trend.
+        </p>
+        <p className="font-sans text-[10px] leading-relaxed text-neutral-600 uppercase tracking-[0.03em]">
+          Sources: Destatis (Federal Statistical Office), Statista, and Destatis statistical reports on births by
+          citizenship.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
 
 function GermanyHoverSeriesTile({
   row,
@@ -1160,11 +1372,28 @@ function renderStatTile(row: CountryStatMetric, opts?: RenderStatTileOpts): Reac
   }
   if (row.metric === 'Immigrant birth rate') {
     const p = extractLeadingPercent(row.value);
-    return <MetricTile row={row} extra={p !== null ? <PercentRing percent={p} /> : undefined} />;
+    return (
+      <MetricTile
+        row={row}
+        extra={p !== null ? <PercentRing percent={p} /> : undefined}
+        fixedHeightClass={opts?.compactBirthRates ? 'h-[216px]' : undefined}
+        clipOverflow={opts?.compactBirthRates}
+      />
+    );
   }
   if (row.metric === 'White (native) birth rate') {
     const p = extractLeadingPercent(row.value);
-    return <MetricTile row={row} extra={p !== null ? <PercentRing percent={p} /> : undefined} />;
+    return (
+      <MetricTile
+        row={row}
+        extra={p !== null ? <PercentRing percent={p} /> : undefined}
+        fixedHeightClass={opts?.compactBirthRates ? 'h-[216px]' : undefined}
+        clipOverflow={opts?.compactBirthRates}
+      />
+    );
+  }
+  if (opts?.compactBirthRates && row.metric !== 'Childhood overweight and obesity (Germany)') {
+    return <MetricTile row={row} fixedHeightClass="h-[216px]" clipOverflow />;
   }
   return <MetricTile row={row} />;
 }
@@ -1597,12 +1826,14 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                     if (b.type === 'germany_immigration') return acc + GERMANY_IMMIGRATION_SUBSECTION_COUNT;
                     if (b.type === 'germany_labor_income') return acc + GERMANY_LABOR_INCOME_GROUP_COUNT;
                     if (b.type === 'germany_economic_structural') return acc + GERMANY_ECONOMIC_STRUCTURAL_GROUP_COUNT;
-                    if (b.type === 'germany_health_basic') return acc + GERMANY_HEALTH_BASIC_GROUP_COUNT;
+                    if (b.type === 'germany_health_basic') {
+                      return acc + GERMANY_HEALTH_BASIC_GROUP_COUNT + GERMANY_BIRTH_RATES_EXTRA_CARDS.length;
+                    }
                     if (b.type === 'germany_lgbt_stats') return acc + GERMANY_LGBT_SECTION_GROUP_COUNT;
                     if (b.type === 'germany_politics_leftism') return acc + GERMANY_POLITICS_LEFTISM_GROUP_COUNT;
                     if (b.type === 'germany_abortion_stats') return acc + GERMANY_ABORTION_SECTION_GROUP_COUNT;
                     if (b.type === 'metrics' && b.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU') {
-                      return acc + b.subRows.length + 1;
+                      return acc + b.subRows.length + 2;
                     }
                     if (b.type === 'metrics') return acc + b.subRows.length;
                     return acc;
@@ -1684,12 +1915,15 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                           <CollapsibleFlagSection
                             key={block.sub.id}
                             title={block.sub.title}
-                            count={GERMANY_HEALTH_BASIC_GROUP_COUNT}
+                            count={GERMANY_HEALTH_BASIC_GROUP_COUNT + GERMANY_BIRTH_RATES_EXTRA_CARDS.length}
                             defaultOpen
                             collapseSignal={collapseSignal}
                               expandSignal={expandSignal}
                           >
-                            <GermanyHealthBasicSection />
+                            <div className="flex flex-col gap-3">
+                              <GermanyHealthBasicSection />
+                              <GermanyBirthRatesExtrasGrid />
+                            </div>
                           </CollapsibleFlagSection>
                         ) : block.type === 'germany_lgbt_stats' ? (
                           <CollapsibleFlagSection
@@ -1730,21 +1964,63 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                             title={block.sub.title}
                             count={
                               block.subRows.length +
-                              (block.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU' ? 1 : 0)
+                              (block.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU' ? 2 : 0)
                             }
                             defaultOpen
                             collapseSignal={collapseSignal}
                             expandSignal={expandSignal}
                           >
-                            <div className="flex flex-col gap-4">
+                            <div
+                              className={
+                                block.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU'
+                                  ? 'relative flex flex-col gap-4'
+                                  : 'flex flex-col gap-4'
+                              }
+                            >
                               {block.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU' ? (
-                                <GermanyPopulationPyramid />
+                                <>
+                                  <GermanyBirthsLineChartTile />
+                                  <GermanyPopulationPyramid />
+                                </>
                               ) : null}
-                              <div className={STAT_GRID}>
-                                {block.subRows.map((row) => (
-                                  <Fragment key={row.metric}>{renderStatTile(row, { iso3 })}</Fragment>
-                                ))}
-                              </div>
+                              {block.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU' ? (
+                                <>
+                                  {(() => {
+                                    const obesityRow =
+                                      block.subRows.find((row) => row.metric === 'Childhood overweight and obesity (Germany)') ??
+                                      null;
+                                    const regularRows = block.subRows.filter(
+                                      (row) => row.metric !== 'Childhood overweight and obesity (Germany)',
+                                    );
+                                    return (
+                                      <div className={`${STAT_GRID} auto-rows-[216px] gap-2`}>
+                                        {regularRows.map((row) => (
+                                          <div key={row.metric} className="h-full">
+                                            {renderStatTile(row, {
+                                              iso3,
+                                              compactBirthRates: true,
+                                            })}
+                                          </div>
+                                        ))}
+                                        {obesityRow ? (
+                                          <div key={obesityRow.metric} className="h-full lg:row-span-2">
+                                            {renderStatTile(obesityRow, {
+                                              iso3,
+                                              compactBirthRates: true,
+                                            })}
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    );
+                                  })()}
+                                </>
+                              ) : (
+                                <div className={STAT_GRID}>
+                                  {block.subRows.map((row) => (
+                                    <Fragment key={row.metric}>{renderStatTile(row, { iso3 })}</Fragment>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </CollapsibleFlagSection>
                         ),
