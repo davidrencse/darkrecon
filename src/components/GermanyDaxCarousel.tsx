@@ -64,7 +64,7 @@ function StockMiniChart({ data, positive }: { data: { idx: number; close: number
 
 function StockCard({ item }: { item: GermanyStockStripRow }) {
   const up = item.changePercent >= 0;
-  const pctClass = up ? 'text-neutral-100' : 'text-neutral-500';
+  const pctClass = up ? 'text-emerald-400' : 'text-red-400';
   const chartData = item.history.map((h, i) => ({ idx: i, close: h.close }));
 
   return (

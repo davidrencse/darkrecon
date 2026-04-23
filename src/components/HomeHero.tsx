@@ -30,7 +30,7 @@ export function HomeHero({ onExplore }: HomeHeroProps) {
           </h1>
 
           <p className="mt-6 max-w-md text-sm leading-relaxed text-neutral-300">
-            Explore country dashboards, demographics, and baseline-vs-latest crime comparisons across the Western world.
+            Information about First World Countries.
           </p>
 
           <div className="mt-8 flex items-center gap-3">
@@ -42,7 +42,7 @@ export function HomeHero({ onExplore }: HomeHeroProps) {
               Explore
             </button>
             <p className="text-[11px] text-neutral-400">
-              Opens the flag gallery.
+             
             </p>
           </div>
         </div>
