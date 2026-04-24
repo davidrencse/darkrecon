@@ -7,8 +7,12 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ComposedChart,
+  Legend,
   Line,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -70,6 +74,32 @@ const ASYLUM_APPLICATIONS_2025 = [
   { country: 'Vietnam', applications: 1_993 },
   { country: 'Other', applications: 42_274 },
 ] as const;
+
+const ASYLUM_PIE_COLORS = [
+  '#f59e0b',
+  '#22c55e',
+  '#60a5fa',
+  '#c084fc',
+  '#f43f5e',
+  '#38bdf8',
+  '#84cc16',
+  '#fb7185',
+  '#14b8a6',
+  '#eab308',
+  '#a3a3a3',
+];
+
+const ASYLUM_TOTAL_2025 = ASYLUM_APPLICATIONS_2025.reduce((sum, row) => sum + row.applications, 0);
+
+const ASYLUM_APPLICATIONS_2025_PIE = ASYLUM_APPLICATIONS_2025.map((row, index) => ({
+  ...row,
+  sharePct: ASYLUM_TOTAL_2025 > 0 ? (row.applications / ASYLUM_TOTAL_2025) * 100 : 0,
+  fill: ASYLUM_PIE_COLORS[index % ASYLUM_PIE_COLORS.length],
+}));
+
+const ASYLUM_SHARE_BY_COUNTRY = new Map(
+  ASYLUM_APPLICATIONS_2025_PIE.map((row) => [row.country, row.sharePct]),
+);
 
 const refugeesChartConfig: ChartConfig = {
   count: {
@@ -907,30 +937,47 @@ export function GermanyImmigrationSection() {
         <CardHeader className="pb-2">
           <CardTitle className="font-sans text-xs uppercase tracking-[0.18em]">Asylum applications [note for 2025]</CardTitle>
           <CardDescription>
-            Applicants by country of origin, includes &quot;Other&quot;.
+            Applicants by country of origin, includes &quot;Other&quot; (counts + share %).
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={asylumChartConfig} className="h-[360px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ASYLUM_APPLICATIONS_2025} margin={{ top: 8, right: 20, left: 0, bottom: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2f2f2f" vertical={false} />
-                <XAxis
-                  dataKey="country"
-                  stroke="#8a8a8a"
-                  tick={{ fontSize: 11, fill: '#cfcfcf' }}
-                  angle={-30}
-                  height={70}
-                  textAnchor="end"
-                  interval={0}
-                />
-                <YAxis stroke="#8a8a8a" tick={{ fontSize: 11, fill: '#8a8a8a' }} tickFormatter={(v: number) => v.toLocaleString('en-US')} />
+              <PieChart margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                <Pie
+                  data={ASYLUM_APPLICATIONS_2025_PIE}
+                  dataKey="applications"
+                  nameKey="country"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={112}
+                  stroke="none"
+                  labelLine={false}
+                >
+                  {ASYLUM_APPLICATIONS_2025_PIE.map((entry) => (
+                    <Cell key={entry.country} fill={entry.fill} />
+                  ))}
+                </Pie>
                 <ChartTooltip
-                  cursor={{ fill: 'rgba(255,255,255,0.06)' }}
-                  content={<ChartTooltipContent formatter={(value) => Number(value).toLocaleString('en-US')} />}
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value, _name, item) => {
+                        const payload = item as { payload?: { sharePct?: number } } | undefined;
+                        const pct = payload?.payload?.sharePct ?? 0;
+                        return `${Number(value).toLocaleString('en-US')} (${pct.toFixed(2)}%)`;
+                      }}
+                    />
+                  }
                 />
-                <Bar dataKey="applications" name="Asylum applications" fill="var(--uk-accent)" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <Legend
+                  wrapperStyle={{ fontSize: '11px', color: 'rgba(212,212,212,0.9)' }}
+                  formatter={(value) => {
+                    const country = String(value);
+                    const pct = ASYLUM_SHARE_BY_COUNTRY.get(country) ?? 0;
+                    return `${country} (${pct.toFixed(2)}%)`;
+                  }}
+                />
+              </PieChart>
             </ResponsiveContainer>
           </ChartContainer>
         </CardContent>

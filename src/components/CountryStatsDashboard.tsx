@@ -61,6 +61,7 @@ import {
 } from './GermanyEconomicStructuralSection';
 import { GermanyPopulationPyramid } from './GermanyPopulationPyramid';
 import { GermanyDaxCarousel } from './GermanyDaxCarousel';
+import { GermanyMarriagesSection, GERMANY_MARRIAGES_GROUP_COUNT } from './GermanyMarriagesSection';
 import germanyForeignStudentsRaw from '../../Assets/Data/Europe/Germany/foreign_students.csv?raw';
 import germanyBirthHealthRaw from '../../Assets/Data/Europe/Germany/germany_birth_health_indicators.csv?raw';
 import fallbackForeignStudentsRaw from '../../Assets/Data/foreign_student_population_screenshot_countries.csv?raw';
@@ -923,6 +924,7 @@ function getPopulationSectionMetrics(iso3: string): string[] {
 type MetricSubsection = { id: string; title: string; metrics: readonly string[] };
 type CustomSubsection =
   | { id: string; title: string; kind: 'germany_immigration' }
+  | { id: string; title: string; kind: 'germany_marriages' }
   | { id: string; title: string; kind: 'germany_labor_income' }
   | { id: string; title: string; kind: 'germany_economic_structural' }
   | { id: string; title: string; kind: 'germany_health_basic' }
@@ -986,7 +988,10 @@ function getStatSections(iso3: string): StatSectionDef[] {
       title: 'Demographics',
       metrics: getPopulationSectionMetrics(iso3),
       subsections: isDeu
-        ? [{ id: 'germany_immigration', title: 'Immigration', kind: 'germany_immigration' as const }]
+        ? [
+            { id: 'germany_immigration', title: 'Immigration', kind: 'germany_immigration' as const },
+            { id: 'marriages', title: 'Marriages', kind: 'germany_marriages' as const },
+          ]
         : undefined,
     },
     {
@@ -1795,6 +1800,7 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                 type NestedBlock =
                   | { type: 'metrics'; sub: MetricSubsection; subRows: CountryStatMetric[] }
                   | { type: 'germany_immigration'; sub: CustomSubsection }
+                  | { type: 'germany_marriages'; sub: CustomSubsection }
                   | { type: 'germany_labor_income'; sub: CustomSubsection }
                   | { type: 'germany_economic_structural'; sub: CustomSubsection }
                   | { type: 'germany_health_basic'; sub: CustomSubsection }
@@ -1809,6 +1815,12 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                   if ('kind' in sub && sub.kind === 'germany_immigration') {
                     if (iso3.toUpperCase() === 'DEU') {
                       nestedBlocks.push({ type: 'germany_immigration', sub });
+                    }
+                    continue;
+                  }
+                  if ('kind' in sub && sub.kind === 'germany_marriages') {
+                    if (iso3.toUpperCase() === 'DEU') {
+                      nestedBlocks.push({ type: 'germany_marriages', sub });
                     }
                     continue;
                   }
@@ -1879,6 +1891,7 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                   (section.id === 'population' && iso3.toUpperCase() === 'DEU' ? 1 : 0) +
                   nestedBlocks.reduce((acc, b) => {
                     if (b.type === 'germany_immigration') return acc + GERMANY_IMMIGRATION_SUBSECTION_COUNT;
+                    if (b.type === 'germany_marriages') return acc + GERMANY_MARRIAGES_GROUP_COUNT;
                     if (b.type === 'germany_labor_income') return acc + GERMANY_LABOR_INCOME_GROUP_COUNT;
                     if (b.type === 'germany_economic_structural') return acc + GERMANY_ECONOMIC_STRUCTURAL_GROUP_COUNT;
                     if (b.type === 'germany_health_basic') {
@@ -1948,6 +1961,17 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                               </div>
                               <GermanyImmigrationSection />
                             </div>
+                          </CollapsibleFlagSection>
+                        ) : block.type === 'germany_marriages' ? (
+                          <CollapsibleFlagSection
+                            key={block.sub.id}
+                            title={block.sub.title}
+                            count={GERMANY_MARRIAGES_GROUP_COUNT}
+                            defaultOpen
+                            collapseSignal={collapseSignal}
+                            expandSignal={expandSignal}
+                          >
+                            <GermanyMarriagesSection />
                           </CollapsibleFlagSection>
                         ) : block.type === 'germany_labor_income' ? (
                           <CollapsibleFlagSection
