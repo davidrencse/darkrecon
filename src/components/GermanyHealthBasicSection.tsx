@@ -7,6 +7,7 @@ import {
   parseGermanyMetricTableCsv,
 } from '../lib/germanyHealthCsv';
 import { GOV_POLITICS_CARD_GRID, GovStatCard, renderMetricGroup } from './GermanyGovernmentPoliticsBlocks';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
 const CSV_URL = '/data/germany_health_statistics_basic.csv';
 
@@ -83,6 +84,100 @@ const HEALTH_OVERVIEW_OECD_EXTRA_ROWS: GermanyGovernmentPoliticsRow[] = [
   },
 ];
 
+function formatValue(row: GermanyGovernmentPoliticsRow | undefined): string {
+  if (!row) return 'N/A';
+  const n = Number(row.value);
+  if (Number.isFinite(n)) return n.toLocaleString('en-US');
+  return row.value || 'N/A';
+}
+
+function HealthcareExpenditureStyledCard({ rows }: { rows: GermanyGovernmentPoliticsRow[] }) {
+  const perCapitaTotal = rows.find((r) => r.submetric.toLowerCase().includes('per capita') && r.breakdown === 'Total');
+  const shareGdpTotal = rows.find((r) => r.submetric.toLowerCase().includes('share of gdp') && r.breakdown === 'Total');
+  const privateShare = rows.find((r) => r.breakdown === 'Private financing share');
+  const publicShare = rows.find((r) => r.breakdown === 'Public financing share');
+  const referenceYear = rows.find((r) => r.referenceYear)?.referenceYear || '2024';
+  const sourceRow =
+    rows.find((r) => r.sourceName.toLowerCase().includes('destatis')) ??
+    rows.find((r) => r.sourceUrl.trim()) ??
+    rows[0];
+
+  const publicPct = Number(publicShare?.value) || 0;
+  const privatePct = Number(privateShare?.value) || 0;
+  const gdpPct = Number(shareGdpTotal?.value) || 0;
+
+  return (
+    <Card className="overflow-hidden border-white/[0.1] bg-black shadow-card sm:col-span-2 lg:col-span-3">
+      <CardHeader className="space-y-1 p-4 pb-3 sm:p-5 sm:pb-4">
+        <CardTitle className="text-xl font-semibold text-neutral-100">Healthcare expenditure</CardTitle>
+        <CardDescription className="text-sm text-neutral-400">Reference year: {referenceYear}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 p-4 pt-0 sm:p-5 sm:pt-0">
+        <div className="rounded-md border border-white/[0.08] bg-black p-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-3 gap-y-2 text-sm">
+            <p className="text-neutral-300">Total</p>
+            <p className="text-right font-semibold text-neutral-100">{formatValue(perCapitaTotal)}</p>
+            <p className="text-right text-neutral-400">EUR per person</p>
+
+            <p className="text-neutral-300">Private financing share</p>
+            <p className="text-right font-semibold text-neutral-100">{formatValue(privateShare)}</p>
+            <p className="text-right text-neutral-400">percent of current health expenditure</p>
+
+            <p className="text-neutral-300">Public financing share</p>
+            <p className="text-right font-semibold text-neutral-100">{formatValue(publicShare)}</p>
+            <p className="text-right text-neutral-400">percent of current health expenditure</p>
+
+            <p className="text-neutral-300">Total</p>
+            <p className="text-right font-semibold text-neutral-100">{formatValue(shareGdpTotal)}</p>
+            <p className="text-right text-neutral-400">percent of GDP</p>
+          </div>
+        </div>
+
+        <div className="space-y-3 rounded-md border border-white/[0.08] bg-black p-3">
+          <div>
+            <div className="mb-1 flex items-center justify-between text-sm">
+              <span className="text-neutral-300">Public financing share</span>
+              <span className="font-semibold text-neutral-100">{publicPct.toFixed(0)}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-white/[0.08]">
+              <div className="h-full rounded-full bg-[#3b82f6]" style={{ width: `${Math.max(2, Math.min(100, publicPct))}%` }} />
+            </div>
+          </div>
+          <div>
+            <div className="mb-1 flex items-center justify-between text-sm">
+              <span className="text-neutral-300">Private financing share</span>
+              <span className="font-semibold text-neutral-100">{privatePct.toFixed(0)}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-white/[0.08]">
+              <div className="h-full rounded-full bg-[#fb923c]" style={{ width: `${Math.max(2, Math.min(100, privatePct))}%` }} />
+            </div>
+          </div>
+          <div>
+            <div className="mb-1 flex items-center justify-between text-sm">
+              <span className="text-neutral-300">Share of GDP</span>
+              <span className="font-semibold text-neutral-100">{gdpPct.toFixed(1)}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-white/[0.08]">
+              <div className="h-full rounded-full bg-[#a3e635]" style={{ width: `${Math.max(2, Math.min(100, gdpPct * 4))}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {sourceRow?.sourceUrl ? (
+          <a
+            href={sourceRow.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-md border border-white/[0.1] bg-emerald-900/20 px-3 py-2 text-sm text-emerald-300 hover:bg-emerald-800/20"
+          >
+            {sourceRow.sourceName} ↗
+          </a>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function GermanyHealthBasicSection() {
   const [raw, setRaw] = useState(healthBasicCsvRaw);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -128,6 +223,9 @@ export function GermanyHealthBasicSection() {
       <div className={GOV_POLITICS_CARD_GRID}>
         {groups.map((g) => {
           const metric = g[0]!.metric;
+          if (metric === 'Healthcare expenditure') {
+            return <HealthcareExpenditureStyledCard key={metric} rows={g} />;
+          }
           if (HEALTH_OVERVIEW_BOX_METRICS.has(metric)) {
             return (
               <Fragment key={metric}>

@@ -22,7 +22,7 @@ import type { CountryWideRow } from '../lib/parseCountriesWideCsv';
 import { indexCountriesByIso3, parseCountriesWideCsv } from '../lib/parseCountriesWideCsv';
 import { collectCrimeSourceUrls, CrimeMetricsSection, GermanyTotalRecordedCrimesChart } from './CrimeMetricsSection';
 import { CollapsibleFlagSection } from './CollapsibleFlagSection';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from './ui/chart';
 import { GermanyImmigrationSection } from './GermanyImmigrationSection';
 import { GermanyGovernmentSection } from './GermanyGovernmentSection';
@@ -398,6 +398,209 @@ const EXPENDITURE_PIE_PALETTE = [
 
 type PieSlice = { label: string; value: number; detailEurBn?: number };
 
+type GermanyGovSpendCategory = {
+  label: string;
+  expenditureText: string;
+  sharePct: number;
+  notes: string;
+  color: string;
+};
+
+type GermanyGovSpendingSeriesKey =
+  | 'total'
+  | 'socialProtection'
+  | 'health'
+  | 'educationResearch'
+  | 'defence'
+  | 'transportInfrastructure'
+  | 'generalPublicServices'
+  | 'interestPayments'
+  | 'economicAffairsSubsidies'
+  | 'other'
+  | 'gdpPerCapitaUsd'
+  | 'laborProductivityIndex'
+  | 'hdi';
+
+type GermanyGovSpendingCategorySeriesKey =
+  | 'socialProtection'
+  | 'health'
+  | 'educationResearch'
+  | 'defence'
+  | 'transportInfrastructure'
+  | 'generalPublicServices'
+  | 'interestPayments'
+  | 'economicAffairsSubsidies'
+  | 'other';
+
+type GermanyGovSpendingSeriesRow = {
+  year: string;
+  total: number;
+  socialProtection: number;
+  health: number;
+  educationResearch: number;
+  defence: number;
+  transportInfrastructure: number;
+  generalPublicServices: number;
+  interestPayments: number;
+  economicAffairsSubsidies: number;
+  other: number;
+  gdpPerCapitaUsd: number;
+  laborProductivityIndex: number;
+  hdi: number;
+};
+
+const GERMANY_GOV_SPEND_TOTAL_2025_EUR_BN = 2259.3;
+const GERMANY_GOV_SPEND_CATEGORIES_2025: readonly GermanyGovSpendCategory[] = [
+  {
+    label: 'Social Benefits & Social Protection',
+    expenditureText: '~920 - 950',
+    sharePct: 41,
+    notes: 'Largest category: pensions, unemployment, long-term care, health insurance subsidies',
+    color: '#f59e0b',
+  },
+  {
+    label: 'Health',
+    expenditureText: '~280 - 300',
+    sharePct: 13,
+    notes: 'Strong increase due to medical services and care',
+    color: '#6366f1',
+  },
+  {
+    label: 'Education & Research',
+    expenditureText: '~205 - 210',
+    sharePct: 9.1,
+    notes: 'Includes schools, universities, and federal research funding',
+    color: '#22c55e',
+  },
+  {
+    label: 'Defence / Military',
+    expenditureText: '~86 - 95',
+    sharePct: 4,
+    notes: 'Significant rise; includes special funds',
+    color: '#ef4444',
+  },
+  {
+    label: 'Transport & Infrastructure',
+    expenditureText: '~120 - 130',
+    sharePct: 5.5,
+    notes: 'Major investments via special funds',
+    color: '#0ea5e9',
+  },
+  {
+    label: 'General Public Services & Administration',
+    expenditureText: '~180 - 200',
+    sharePct: 8,
+    notes: 'Includes interest payments and general admin',
+    color: '#a855f7',
+  },
+  {
+    label: 'Interest Payments on Debt',
+    expenditureText: '~50 - 55',
+    sharePct: 2.3,
+    notes: 'Up 8.1% from previous year',
+    color: '#f97316',
+  },
+  {
+    label: 'Housing, Family & Youth',
+    expenditureText: '~80 - 90',
+    sharePct: 4,
+    notes: 'Family benefits, housing subsidies',
+    color: '#14b8a6',
+  },
+  {
+    label: 'Economic Affairs & Subsidies',
+    expenditureText: '~110 - 120',
+    sharePct: 5,
+    notes: 'Includes energy transition and business support',
+    color: '#84cc16',
+  },
+  {
+    label: 'Other (Environment, Culture, etc.)',
+    expenditureText: '~150 - 170',
+    sharePct: 7,
+    notes: 'Remaining categories',
+    color: '#f43f5e',
+  },
+];
+
+const GERMANY_GOV_SPEND_ADDITIONAL_CARDS: readonly GermanyGovSpendCategory[] = [
+  {
+    label: 'PUBLIC INVESTMENT',
+    expenditureText: '115 - 120',
+    sharePct: 5.1,
+    notes:
+      'Record investments in infrastructure, transport and climate projects (core budget + special funds). SOURCE: Federal Ministry of Finance / Destatis 2025',
+    color: '#06b6d4',
+  },
+  {
+    label: 'PENSIONS',
+    expenditureText: '380 - 400',
+    sharePct: 17,
+    notes:
+      'Old-age and survivors\' pensions (largest single component of social spending). SOURCE: Destatis / Federal Pension Insurance 2025',
+    color: '#eab308',
+  },
+];
+
+const GERMANY_GOV_SPENDING_SERIES: readonly GermanyGovSpendingSeriesRow[] = [
+  { year: '2000', total: 960.8, socialProtection: 380, health: 110, educationResearch: 85, defence: 28, transportInfrastructure: 45, generalPublicServices: 95, interestPayments: 45, economicAffairsSubsidies: 55, other: 118, gdpPerCapitaUsd: 23926, laborProductivityIndex: 100.0, hdi: 0.897 },
+  { year: '2001', total: 975.5, socialProtection: 385, health: 112, educationResearch: 87, defence: 28, transportInfrastructure: 46, generalPublicServices: 97, interestPayments: 46, economicAffairsSubsidies: 55, other: 120, gdpPerCapitaUsd: 23878, laborProductivityIndex: 101.2, hdi: 0.904 },
+  { year: '2002', total: 992.7, socialProtection: 395, health: 115, educationResearch: 89, defence: 29, transportInfrastructure: 47, generalPublicServices: 98, interestPayments: 45, economicAffairsSubsidies: 56, other: 119, gdpPerCapitaUsd: 25487, laborProductivityIndex: 102.5, hdi: 0.91 },
+  { year: '2003', total: 1003.3, socialProtection: 400, health: 118, educationResearch: 90, defence: 29, transportInfrastructure: 48, generalPublicServices: 100, interestPayments: 44, economicAffairsSubsidies: 57, other: 117, gdpPerCapitaUsd: 30711, laborProductivityIndex: 103.8, hdi: 0.916 },
+  { year: '2004', total: 993.1, socialProtection: 395, health: 120, educationResearch: 91, defence: 28, transportInfrastructure: 47, generalPublicServices: 98, interestPayments: 42, economicAffairsSubsidies: 55, other: 117, gdpPerCapitaUsd: 34567, laborProductivityIndex: 105.1, hdi: 0.921 },
+  { year: '2005', total: 1002.2, socialProtection: 400, health: 122, educationResearch: 92, defence: 28, transportInfrastructure: 48, generalPublicServices: 99, interestPayments: 40, economicAffairsSubsidies: 56, other: 117, gdpPerCapitaUsd: 35084, laborProductivityIndex: 106.5, hdi: 0.926 },
+  { year: '2006', total: 1004.9, socialProtection: 400, health: 125, educationResearch: 93, defence: 28, transportInfrastructure: 48, generalPublicServices: 100, interestPayments: 38, economicAffairsSubsidies: 55, other: 118, gdpPerCapitaUsd: 36980, laborProductivityIndex: 108.4, hdi: 0.93 },
+  { year: '2007', total: 1017.5, socialProtection: 405, health: 128, educationResearch: 95, defence: 28, transportInfrastructure: 49, generalPublicServices: 102, interestPayments: 38, economicAffairsSubsidies: 55, other: 118, gdpPerCapitaUsd: 42351, laborProductivityIndex: 110.2, hdi: 0.934 },
+  { year: '2008', total: 1056.0, socialProtection: 415, health: 135, educationResearch: 98, defence: 29, transportInfrastructure: 52, generalPublicServices: 105, interestPayments: 40, economicAffairsSubsidies: 58, other: 124, gdpPerCapitaUsd: 46386, laborProductivityIndex: 110.8, hdi: 0.936 },
+  { year: '2009', total: 1113.1, socialProtection: 450, health: 145, educationResearch: 105, defence: 30, transportInfrastructure: 55, generalPublicServices: 110, interestPayments: 38, economicAffairsSubsidies: 70, other: 110, gdpPerCapitaUsd: 42487, laborProductivityIndex: 107.5, hdi: 0.935 },
+  { year: '2010', total: 1105.9, socialProtection: 445, health: 148, educationResearch: 107, defence: 31, transportInfrastructure: 54, generalPublicServices: 108, interestPayments: 35, economicAffairsSubsidies: 65, other: 113, gdpPerCapitaUsd: 42410, laborProductivityIndex: 110.0, hdi: 0.936 },
+  { year: '2011', total: 1173.5, socialProtection: 460, health: 155, educationResearch: 110, defence: 32, transportInfrastructure: 58, generalPublicServices: 115, interestPayments: 38, economicAffairsSubsidies: 70, other: 136, gdpPerCapitaUsd: 47647, laborProductivityIndex: 112.5, hdi: 0.938 },
+  { year: '2012', total: 1176.1, socialProtection: 465, health: 158, educationResearch: 112, defence: 33, transportInfrastructure: 58, generalPublicServices: 115, interestPayments: 35, economicAffairsSubsidies: 68, other: 132, gdpPerCapitaUsd: 44736, laborProductivityIndex: 113.2, hdi: 0.94 },
+  { year: '2013', total: 1211.6, socialProtection: 480, health: 165, educationResearch: 115, defence: 33, transportInfrastructure: 60, generalPublicServices: 118, interestPayments: 32, economicAffairsSubsidies: 70, other: 139, gdpPerCapitaUsd: 47220, laborProductivityIndex: 114.0, hdi: 0.942 },
+  { year: '2014', total: 1236.7, socialProtection: 490, health: 170, educationResearch: 118, defence: 33, transportInfrastructure: 62, generalPublicServices: 120, interestPayments: 30, economicAffairsSubsidies: 72, other: 142, gdpPerCapitaUsd: 48971, laborProductivityIndex: 115.1, hdi: 0.944 },
+  { year: '2015', total: 1272.8, socialProtection: 505, health: 178, educationResearch: 122, defence: 34, transportInfrastructure: 65, generalPublicServices: 125, interestPayments: 28, economicAffairsSubsidies: 75, other: 141, gdpPerCapitaUsd: 41911, laborProductivityIndex: 116.3, hdi: 0.948 },
+  { year: '2016', total: 1326.1, socialProtection: 525, health: 185, educationResearch: 128, defence: 35, transportInfrastructure: 68, generalPublicServices: 130, interestPayments: 25, economicAffairsSubsidies: 78, other: 152, gdpPerCapitaUsd: 42961, laborProductivityIndex: 117.8, hdi: 0.95 },
+  { year: '2017', total: 1367.9, socialProtection: 540, health: 192, educationResearch: 132, defence: 37, transportInfrastructure: 70, generalPublicServices: 135, interestPayments: 25, economicAffairsSubsidies: 80, other: 157, gdpPerCapitaUsd: 45527, laborProductivityIndex: 119.5, hdi: 0.952 },
+  { year: '2018', total: 1428.5, socialProtection: 560, health: 200, educationResearch: 138, defence: 40, transportInfrastructure: 75, generalPublicServices: 140, interestPayments: 28, economicAffairsSubsidies: 85, other: 163, gdpPerCapitaUsd: 48916, laborProductivityIndex: 120.8, hdi: 0.954 },
+  { year: '2019', total: 1497.4, socialProtection: 585, health: 210, educationResearch: 145, defence: 43, transportInfrastructure: 80, generalPublicServices: 145, interestPayments: 30, economicAffairsSubsidies: 88, other: 172, gdpPerCapitaUsd: 47656, laborProductivityIndex: 121.5, hdi: 0.951 },
+  { year: '2020', total: 1678.6, socialProtection: 650, health: 230, educationResearch: 155, defence: 45, transportInfrastructure: 95, generalPublicServices: 160, interestPayments: 25, economicAffairsSubsidies: 120, other: 199, gdpPerCapitaUsd: 47395, laborProductivityIndex: 118.0, hdi: 0.955 },
+  { year: '2021', total: 1820.0, socialProtection: 700, health: 245, educationResearch: 165, defence: 48, transportInfrastructure: 105, generalPublicServices: 170, interestPayments: 28, economicAffairsSubsidies: 130, other: 229, gdpPerCapitaUsd: 52349, laborProductivityIndex: 122.0, hdi: 0.958 },
+  { year: '2022', total: 1875.0, socialProtection: 720, health: 255, educationResearch: 170, defence: 55, transportInfrastructure: 110, generalPublicServices: 175, interestPayments: 35, economicAffairsSubsidies: 125, other: 230, gdpPerCapitaUsd: 50507, laborProductivityIndex: 122.8, hdi: 0.95 },
+  { year: '2023', total: 2100.0, socialProtection: 780, health: 270, educationResearch: 185, defence: 70, transportInfrastructure: 115, generalPublicServices: 180, interestPayments: 45, economicAffairsSubsidies: 130, other: 225, gdpPerCapitaUsd: 54777, laborProductivityIndex: 123.5, hdi: 0.955 },
+  { year: '2024', total: 2139.7, socialProtection: 810, health: 280, educationResearch: 195, defence: 80, transportInfrastructure: 120, generalPublicServices: 185, interestPayments: 50, economicAffairsSubsidies: 115, other: 235, gdpPerCapitaUsd: 56104, laborProductivityIndex: 124.2, hdi: 0.958 },
+  { year: '2025', total: 2259.3, socialProtection: 930, health: 295, educationResearch: 205, defence: 92, transportInfrastructure: 125, generalPublicServices: 190, interestPayments: 53, economicAffairsSubsidies: 118, other: 251, gdpPerCapitaUsd: 57500, laborProductivityIndex: 124.8, hdi: 0.959 },
+] as const;
+
+const GERMANY_GOV_SPENDING_LINE_CONFIG = {
+  total: { label: 'Total Expenditure', color: '#f59e0b' },
+  socialProtection: { label: 'Social Protection', color: '#22c55e' },
+  health: { label: 'Health', color: '#60a5fa' },
+  educationResearch: { label: 'Education & Research', color: '#c084fc' },
+  defence: { label: 'Defence', color: '#ef4444' },
+  transportInfrastructure: { label: 'Transport & Infrastructure', color: '#0ea5e9' },
+  generalPublicServices: { label: 'General Public Services', color: '#a855f7' },
+  interestPayments: { label: 'Interest Payments', color: '#f97316' },
+  economicAffairsSubsidies: { label: 'Economic Affairs & Subsidies', color: '#84cc16' },
+  other: { label: 'Other', color: '#f43f5e' },
+  gdpPerCapitaUsd: { label: 'GDP per Capita (USD, nominal)', color: '#22d3ee' },
+  laborProductivityIndex: { label: 'Labor Productivity (Index 2000=100)', color: '#eab308' },
+  hdi: { label: 'HDI', color: '#a78bfa' },
+} satisfies ChartConfig;
+
+const GERMANY_GOV_SPENDING_CATEGORY_SERIES_ORDER: readonly GermanyGovSpendingCategorySeriesKey[] = [
+  'socialProtection',
+  'health',
+  'educationResearch',
+  'defence',
+  'transportInfrastructure',
+  'generalPublicServices',
+  'interestPayments',
+  'economicAffairsSubsidies',
+  'other',
+];
+
+const GERMANY_GOV_SPENDING_EXTRA_CARD_COUNT = 15;
+
 function ExpenditurePieTile({ row }: { row: CountryStatMetric }) {
   let slices: PieSlice[] = [];
   try {
@@ -408,6 +611,14 @@ function ExpenditurePieTile({ row }: { row: CountryStatMetric }) {
     }
   } catch {
     slices = [];
+  }
+
+  if (row.geography_used.toUpperCase().includes('GERMANY')) {
+    slices = GERMANY_GOV_SPEND_CATEGORIES_2025.map((c) => ({
+      label: c.label,
+      value: c.sharePct,
+      detailEurBn: (GERMANY_GOV_SPEND_TOTAL_2025_EUR_BN * c.sharePct) / 100,
+    }));
   }
 
   /** Germany combined pie: weight slices by €bn (`detailEurBn`). Legacy OECD pie: `value` is already %. */
@@ -436,7 +647,7 @@ function ExpenditurePieTile({ row }: { row: CountryStatMetric }) {
       </p>
       {slices.length > 0 ? (
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-center lg:gap-10">
-          <ChartContainer config={chartConfig} className="mx-auto h-[280px] w-full max-w-[340px] shrink-0 sm:max-w-[380px]">
+          <ChartContainer config={chartConfig} className="mx-auto h-[300px] w-full max-w-[360px] shrink-0 sm:max-w-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -445,7 +656,8 @@ function ExpenditurePieTile({ row }: { row: CountryStatMetric }) {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={110}
+                  innerRadius={52}
+                  outerRadius={116}
                   paddingAngle={0.4}
                   stroke="none"
                 >
@@ -504,6 +716,249 @@ function ExpenditurePieTile({ row }: { row: CountryStatMetric }) {
       <MetaLine row={row} />
       <NoteBlock text={row.notes} />
     </article>
+  );
+}
+
+function GermanyGovernmentSpendingSummaryTile() {
+  return (
+    <Card className="col-span-full border-line bg-surface-metric shadow-card">
+      <CardHeader className="space-y-1 p-4 pb-2 sm:p-5 sm:pb-3">
+        <CardTitle className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+          Total Government Expenditure
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 p-4 pt-0 sm:p-5 sm:pt-0">
+        <p className="font-sans text-2xl font-semibold tracking-tight text-neutral-100 sm:text-3xl">
+          €2,259.3 billion
+        </p>
+        <p className="font-sans text-[10px] uppercase tracking-[0.03em] text-neutral-500">(2025)</p>
+        <p className="font-sans text-[11px] leading-relaxed text-neutral-300">
+          Spending increased by 5.6% (+€119.6 billion) compared to 2024.
+        </p>
+        <p className="font-sans text-[11px] leading-relaxed text-neutral-300">
+          The year ended with a general government deficit of €119.1 billion.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function GermanyGovernmentSpendingCategoryCards() {
+  const cards = [...GERMANY_GOV_SPEND_CATEGORIES_2025, ...GERMANY_GOV_SPEND_ADDITIONAL_CARDS];
+  return (
+    <div className="col-span-full grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {cards.map((category) => (
+        <Card key={category.label} className="overflow-hidden border-line bg-surface-metric shadow-card">
+          <CardHeader className="space-y-1 p-3 pb-1.5">
+            <CardTitle className="font-sans text-xs font-semibold leading-snug text-neutral-100">
+              {category.label}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 p-3 pt-0">
+            <p className="font-sans text-xl font-semibold tabular-nums tracking-tight text-white sm:text-2xl">
+              €{category.expenditureText}B
+            </p>
+            <div className="h-2 w-full rounded-full bg-white/[0.08]">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${Math.max(2, Math.min(100, category.sharePct))}%`, backgroundColor: category.color }}
+              />
+            </div>
+            <div className="flex items-center gap-2 font-sans text-[11px] text-neutral-300">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: category.color }} />
+              <span>{category.sharePct.toFixed(1)}% of total</span>
+            </div>
+            <p className="font-sans text-[10px] leading-relaxed text-neutral-500">{category.notes}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function GermanyGovernmentSpendingTotalLineChart() {
+  const [hovered, setHovered] = useState<GermanyGovSpendingSeriesKey | null>(null);
+  const activeKey: GermanyGovSpendingSeriesKey = hovered ?? 'total';
+  const formatAxisByKey = (key: GermanyGovSpendingSeriesKey, value: number): string => {
+    if (key === 'gdpPerCapitaUsd') return `$${Math.round(value).toLocaleString('en-US')}`;
+    if (key === 'hdi') return value.toFixed(3);
+    if (key === 'laborProductivityIndex') return value.toFixed(1);
+    return `€${Math.round(value).toLocaleString('en-US')}B`;
+  };
+  const seriesKeys: readonly GermanyGovSpendingSeriesKey[] = [
+    'total',
+    'gdpPerCapitaUsd',
+    'laborProductivityIndex',
+    'hdi',
+  ];
+
+  const axisIdByKey: Record<GermanyGovSpendingSeriesKey, string> = {
+    total: 'axis_total',
+    socialProtection: 'axis_socialProtection',
+    health: 'axis_health',
+    educationResearch: 'axis_educationResearch',
+    defence: 'axis_defence',
+    transportInfrastructure: 'axis_transportInfrastructure',
+    generalPublicServices: 'axis_generalPublicServices',
+    interestPayments: 'axis_interestPayments',
+    economicAffairsSubsidies: 'axis_economicAffairsSubsidies',
+    other: 'axis_other',
+    gdpPerCapitaUsd: 'axis_gdpPerCapitaUsd',
+    laborProductivityIndex: 'axis_laborProductivityIndex',
+    hdi: 'axis_hdi',
+  };
+  const axisLabelByKey: Record<GermanyGovSpendingSeriesKey, string> = {
+    total: 'Government expenditure (€bn)',
+    socialProtection: 'Government expenditure (€bn)',
+    health: 'Government expenditure (€bn)',
+    educationResearch: 'Government expenditure (€bn)',
+    defence: 'Government expenditure (€bn)',
+    transportInfrastructure: 'Government expenditure (€bn)',
+    generalPublicServices: 'Government expenditure (€bn)',
+    interestPayments: 'Government expenditure (€bn)',
+    economicAffairsSubsidies: 'Government expenditure (€bn)',
+    other: 'Government expenditure (€bn)',
+    gdpPerCapitaUsd: 'GDP per capita (USD)',
+    laborProductivityIndex: 'Labor productivity (Index 2000=100)',
+    hdi: 'HDI',
+  };
+  const activeValues = GERMANY_GOV_SPENDING_SERIES.map((row) => Number(row[activeKey]));
+  const activeMin = Math.min(...activeValues);
+  const activeMax = Math.max(...activeValues);
+  const padding = activeKey === 'hdi' ? 0.01 : Math.max((activeMax - activeMin) * 0.08, 1);
+  const contextDomain: [number, number] = [activeMin - padding, activeMax + padding];
+  const stroke = (k: GermanyGovSpendingSeriesKey) =>
+    hovered !== null && hovered !== k ? '#737373' : String(GERMANY_GOV_SPENDING_LINE_CONFIG[k].color);
+  const opacity = (k: GermanyGovSpendingSeriesKey) => (hovered !== null && hovered !== k ? 0.28 : 1);
+  const width = (k: GermanyGovSpendingSeriesKey) => (hovered === k ? 3 : 2.2);
+
+  return (
+    <Card className="col-span-full border-line bg-surface-metric shadow-card">
+      <CardHeader className="space-y-1 p-4 pb-2 sm:p-5 sm:pb-3">
+        <CardTitle className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+          Government Expenditure Trends in Context
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 p-4 pt-0 sm:p-5 sm:pt-0" onMouseLeave={() => setHovered(null)}>
+        <ChartContainer config={GERMANY_GOV_SPENDING_LINE_CONFIG} className="h-[320px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={GERMANY_GOV_SPENDING_SERIES} margin={{ top: 8, right: 10, left: 20, bottom: 8 }}>
+              <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+              <XAxis dataKey="year" tick={{ fill: 'rgba(163,163,163,0.9)', fontSize: 10, fontFamily: 'ui-sans-serif' }} axisLine={false} tickLine={false} />
+              <YAxis
+                tickFormatter={(v) => formatAxisByKey(activeKey, Number(v))}
+                tick={{ fill: 'rgba(163,163,163,0.9)', fontSize: 10, fontFamily: 'ui-sans-serif' }}
+                axisLine={false}
+                tickLine={false}
+                width={104}
+                domain={contextDomain}
+                allowDataOverflow
+                label={{
+                  value: axisLabelByKey[activeKey],
+                  angle: -90,
+                  position: 'insideLeft',
+                  fill: 'rgba(163,163,163,0.65)',
+                  fontSize: 9,
+                }}
+              />
+              {seriesKeys.map((key) => (
+                <YAxis
+                  key={key}
+                  yAxisId={axisIdByKey[key]}
+                  hide
+                  tickFormatter={(v) => formatAxisByKey(key, Number(v))}
+                  tick={{ fill: 'rgba(163,163,163,0.9)', fontSize: 10, fontFamily: 'ui-sans-serif' }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={104}
+                  domain={['auto', 'auto']}
+                />
+              ))}
+              <ChartTooltip
+                cursor={{ stroke: 'rgba(255,255,255,0.12)' }}
+                content={
+                  <ChartTooltipContent
+                    className="rounded-md"
+                    formatter={(value, name) => {
+                      const n = Number(value);
+                      const lineName = String(name);
+                      if (lineName.includes('GDP per Capita')) return `$${Math.round(n).toLocaleString('en-US')}`;
+                      if (lineName.includes('Labor Productivity')) return n.toFixed(1);
+                      if (lineName === 'HDI') return n.toFixed(3);
+                      return `€${n.toFixed(1)}B`;
+                    }}
+                    labelFormatter={(label) => `Year ${String(label)}`}
+                  />
+                }
+              />
+              <Legend wrapperStyle={{ fontSize: '11px', color: 'rgba(212,212,212,0.9)' }} iconType="line" />
+              <Line type="monotone" yAxisId={axisIdByKey.total} dataKey="total" name={GERMANY_GOV_SPENDING_LINE_CONFIG.total.label} stroke={stroke('total')} strokeOpacity={opacity('total')} strokeWidth={width('total')} dot={false} activeDot={{ r: 5 }} isAnimationActive={false} onMouseEnter={() => setHovered('total')} />
+              <Line type="monotone" yAxisId={axisIdByKey.gdpPerCapitaUsd} dataKey="gdpPerCapitaUsd" name={GERMANY_GOV_SPENDING_LINE_CONFIG.gdpPerCapitaUsd.label} stroke={stroke('gdpPerCapitaUsd')} strokeOpacity={opacity('gdpPerCapitaUsd')} strokeWidth={width('gdpPerCapitaUsd')} dot={false} activeDot={{ r: 5 }} isAnimationActive={false} onMouseEnter={() => setHovered('gdpPerCapitaUsd')} />
+              <Line type="monotone" yAxisId={axisIdByKey.laborProductivityIndex} dataKey="laborProductivityIndex" name={GERMANY_GOV_SPENDING_LINE_CONFIG.laborProductivityIndex.label} stroke={stroke('laborProductivityIndex')} strokeOpacity={opacity('laborProductivityIndex')} strokeWidth={width('laborProductivityIndex')} dot={false} activeDot={{ r: 5 }} isAnimationActive={false} onMouseEnter={() => setHovered('laborProductivityIndex')} />
+              <Line type="monotone" yAxisId={axisIdByKey.hdi} dataKey="hdi" name={GERMANY_GOV_SPENDING_LINE_CONFIG.hdi.label} stroke={stroke('hdi')} strokeOpacity={opacity('hdi')} strokeWidth={width('hdi')} dot={false} activeDot={{ r: 5 }} isAnimationActive={false} onMouseEnter={() => setHovered('hdi')} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+function GermanyGovernmentSpendingCategoryLineChart() {
+  const [hovered, setHovered] = useState<GermanyGovSpendingSeriesKey | null>(null);
+  const stroke = (k: GermanyGovSpendingSeriesKey) =>
+    hovered !== null && hovered !== k ? '#737373' : String(GERMANY_GOV_SPENDING_LINE_CONFIG[k].color);
+  const opacity = (k: GermanyGovSpendingSeriesKey) => (hovered !== null && hovered !== k ? 0.28 : 1);
+  const width = (k: GermanyGovSpendingSeriesKey) => (hovered === k ? 3 : 2.1);
+
+  return (
+    <Card className="col-span-full border-line bg-surface-metric shadow-card">
+      <CardHeader className="space-y-1 p-4 pb-2 sm:p-5 sm:pb-3">
+        <CardTitle className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+          Government Expenditure By Category (2000-2025)
+        </CardTitle>
+        <CardDescription className="font-sans text-[10px] text-neutral-500">
+          Hover a line to focus it; other lines are greyed out.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2 p-4 pt-0 sm:p-5 sm:pt-0" onMouseLeave={() => setHovered(null)}>
+        <ChartContainer config={GERMANY_GOV_SPENDING_LINE_CONFIG} className="h-[420px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={GERMANY_GOV_SPENDING_SERIES} margin={{ top: 8, right: 10, left: 12, bottom: 8 }}>
+              <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+              <XAxis dataKey="year" tick={{ fill: 'rgba(163,163,163,0.9)', fontSize: 10, fontFamily: 'ui-sans-serif' }} axisLine={false} tickLine={false} />
+              <YAxis
+                tickFormatter={(v) => `€${Number(v).toFixed(0)}B`}
+                tick={{ fill: 'rgba(163,163,163,0.9)', fontSize: 10, fontFamily: 'ui-sans-serif' }}
+                axisLine={false}
+                tickLine={false}
+                width={72}
+                domain={['auto', 'auto']}
+              />
+              <ChartTooltip
+                cursor={{ stroke: 'rgba(255,255,255,0.12)' }}
+                content={<ChartTooltipContent className="rounded-md" formatter={(value) => `€${Number(value).toFixed(1)}B`} labelFormatter={(label) => `Year ${String(label)}`} />}
+              />
+              {GERMANY_GOV_SPENDING_CATEGORY_SERIES_ORDER.map((key) => (
+                <Line
+                  key={key}
+                  type="monotone"
+                  dataKey={key}
+                  name={GERMANY_GOV_SPENDING_LINE_CONFIG[key].label}
+                  stroke={stroke(key)}
+                  strokeOpacity={opacity(key)}
+                  strokeWidth={width(key)}
+                  dot={false}
+                  activeDot={{ r: hovered === key ? 5 : 4 }}
+                  isAnimationActive={false}
+                  onMouseEnter={() => setHovered(key)}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1905,6 +2360,9 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                     if (b.type === 'metrics' && b.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU') {
                       return acc + b.subRows.length + 2;
                     }
+                    if (b.type === 'metrics' && b.sub.id === 'government_spending' && iso3.toUpperCase() === 'DEU') {
+                      return acc + b.subRows.length + GERMANY_GOV_SPENDING_EXTRA_CARD_COUNT;
+                    }
                     if (b.type === 'metrics') return acc + b.subRows.length;
                     return acc;
                   }, 0);
@@ -2071,6 +2529,9 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                             count={
                               block.subRows.length +
                               (block.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU' ? 2 : 0)
+                              + (block.sub.id === 'government_spending' && iso3.toUpperCase() === 'DEU'
+                                ? GERMANY_GOV_SPENDING_EXTRA_CARD_COUNT
+                                : 0)
                             }
                             defaultOpen
                             collapseSignal={collapseSignal}
@@ -2086,6 +2547,14 @@ export function CountryStatsDashboard({ flag, iso3, onBack }: CountryStatsDashbo
                               {block.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU' ? (
                                 <>
                                   <GermanyBirthsLineChartTile />
+                                </>
+                              ) : null}
+                              {block.sub.id === 'government_spending' && iso3.toUpperCase() === 'DEU' ? (
+                                <>
+                                  <GermanyGovernmentSpendingSummaryTile />
+                                  <GermanyGovernmentSpendingTotalLineChart />
+                                  <GermanyGovernmentSpendingCategoryLineChart />
+                                  <GermanyGovernmentSpendingCategoryCards />
                                 </>
                               ) : null}
                               {block.sub.id === 'birth_rates' && iso3.toUpperCase() === 'DEU' ? (

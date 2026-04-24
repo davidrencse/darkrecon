@@ -97,7 +97,7 @@ const ASYLUM_APPLICATIONS_2025_PIE = ASYLUM_APPLICATIONS_2025.map((row, index) =
   fill: ASYLUM_PIE_COLORS[index % ASYLUM_PIE_COLORS.length],
 }));
 
-const ASYLUM_SHARE_BY_COUNTRY = new Map(
+const ASYLUM_SHARE_BY_COUNTRY: Record<string, number> = Object.fromEntries(
   ASYLUM_APPLICATIONS_2025_PIE.map((row) => [row.country, row.sharePct]),
 );
 
@@ -973,7 +973,7 @@ export function GermanyImmigrationSection() {
                   wrapperStyle={{ fontSize: '11px', color: 'rgba(212,212,212,0.9)' }}
                   formatter={(value) => {
                     const country = String(value);
-                    const pct = ASYLUM_SHARE_BY_COUNTRY.get(country) ?? 0;
+                    const pct = ASYLUM_SHARE_BY_COUNTRY[country] ?? 0;
                     return `${country} (${pct.toFixed(2)}%)`;
                   }}
                 />
