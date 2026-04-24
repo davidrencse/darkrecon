@@ -2,6 +2,7 @@ import type { CountryWideRow } from '../lib/parseCountriesWideCsv';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from './ui/chart';
 import { Separator } from './ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import {
   CartesianGrid,
   ComposedChart,
@@ -78,6 +79,72 @@ type GermanyCrimeStatCard = {
   metric: string;
   notes: string;
 };
+
+type GermanyCrimeHeadlineCard = {
+  id: string;
+  title: string;
+  value: string;
+  subtitle?: string;
+};
+
+type GermanyCrimeTableRow = {
+  rank: number;
+  city: string;
+  value: string;
+};
+
+const GERMANY_CRIME_HEADLINE_CARDS: readonly GermanyCrimeHeadlineCard[] = [
+  {
+    id: 'nation-safety-rating',
+    title: 'Germany Nation Safety Rating',
+    value: '20th in the world',
+    subtitle: 'Global Peace Index 2025: Score 1.533 · Numbeo Safety Index 2026: 61.6',
+  },
+  { id: 'crime-rate', title: 'Crime Rate', value: '6,580 per 100,000 inhabitants' },
+  { id: 'murder-rate', title: 'Murder', value: '2.9 per 100,000 inhabitants' },
+  { id: 'rape-rate', title: 'Rape', value: '17.3 per 100,000 inhabitants' },
+  { id: 'theft-rate', title: 'Theft', value: '2,400 per 100,000 inhabitants' },
+  { id: 'petty-crime-rate', title: 'Petty Crime', value: '4,200 per 100,000 inhabitants' },
+];
+
+const GERMANY_MOST_DANGEROUS_CITIES: readonly GermanyCrimeTableRow[] = [
+  { rank: 1, city: 'Bremen', value: '15,424' },
+  { rank: 2, city: 'Frankfurt am Main', value: '14,600' },
+  { rank: 3, city: 'Berlin', value: '14,252' },
+  { rank: 4, city: 'Bremerhaven', value: '13,717' },
+  { rank: 5, city: 'Hanover', value: '12,500' },
+  { rank: 6, city: 'Hamburg', value: '12,147' },
+  { rank: 7, city: 'Cologne', value: '11,000' },
+  { rank: 8, city: 'Dortmund', value: '10,500' },
+  { rank: 9, city: 'Dusseldorf', value: '9,800' },
+  { rank: 10, city: 'Essen', value: '9,500' },
+];
+
+const GERMANY_CITIES_MOST_IMMIGRANTS: readonly GermanyCrimeTableRow[] = [
+  { rank: 1, city: 'Berlin', value: '994,590' },
+  { rank: 2, city: 'Hamburg', value: '387,845' },
+  { rank: 3, city: 'Munich', value: '380,000' },
+  { rank: 4, city: 'Frankfurt am Main', value: '300,000' },
+  { rank: 5, city: 'Cologne', value: '280,000' },
+  { rank: 6, city: 'Stuttgart', value: '220,000' },
+  { rank: 7, city: 'Dusseldorf', value: '180,000' },
+  { rank: 8, city: 'Dortmund', value: '170,000' },
+  { rank: 9, city: 'Essen', value: '160,000' },
+  { rank: 10, city: 'Leipzig', value: '140,000' },
+];
+
+const GERMANY_CITIES_HIGHEST_MIGRANT_SHARE: readonly GermanyCrimeTableRow[] = [
+  { rank: 1, city: 'Offenbach am Main', value: '66.5%' },
+  { rank: 2, city: 'Pforzheim', value: '59.7%' },
+  { rank: 3, city: 'Heilbronn', value: '58.3%' },
+  { rank: 4, city: 'Frankfurt am Main', value: '57.0%' },
+  { rank: 5, city: 'Salzgitter', value: '57.5%' },
+  { rank: 6, city: 'Nuremberg', value: '51.6%' },
+  { rank: 7, city: 'Munich', value: '49.5%' },
+  { rank: 8, city: 'Stuttgart', value: '48.7%' },
+  { rank: 9, city: 'Hagen', value: '43.3%' },
+  { rank: 10, city: 'Wuppertal', value: '42.6%' },
+];
 
 const GERMANY_CRIME_2024_STATS: readonly GermanyCrimeStatCard[] = [
   {
@@ -636,6 +703,58 @@ function GermanyCrime2024StatCard({ item }: { item: GermanyCrimeStatCard }) {
   );
 }
 
+function GermanyCrimeHeadlineStatCard({ item }: { item: GermanyCrimeHeadlineCard }) {
+  return (
+    <Card className="flex flex-col overflow-hidden border-line bg-surface-metric shadow-card">
+      <CardHeader className="pb-0">
+        <CardTitle>{item.title}</CardTitle>
+        {item.subtitle ? <CardDescription>{item.subtitle}</CardDescription> : null}
+      </CardHeader>
+      <CardContent className="pt-4">
+        <p className="font-sans text-2xl font-semibold tracking-tight text-white">{item.value}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function GermanyCrimeRankingTable({
+  title,
+  valueHeader,
+  rows,
+}: {
+  title: string;
+  valueHeader: string;
+  rows: readonly GermanyCrimeTableRow[];
+}) {
+  return (
+    <Card className="border-line bg-surface-metric shadow-card">
+      <CardHeader className="pb-2">
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-20">Rank</TableHead>
+              <TableHead>City</TableHead>
+              <TableHead className="text-right">{valueHeader}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={`${title}-${row.rank}-${row.city}`}>
+                <TableCell>{row.rank}</TableCell>
+                <TableCell>{row.city}</TableCell>
+                <TableCell className="text-right">{row.value}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
 type CrimeMetricsSectionProps = {
   crimeRow: CountryWideRow | null;
   iso3?: string;
@@ -657,6 +776,32 @@ export function CrimeMetricsSection({ crimeRow, iso3 }: CrimeMetricsSectionProps
 
   return (
     <div className="flex flex-col gap-4">
+      {iso3?.toUpperCase() === 'DEU' ? (
+        <>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {GERMANY_CRIME_HEADLINE_CARDS.map((item) => (
+              <GermanyCrimeHeadlineStatCard key={item.id} item={item} />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+            <GermanyCrimeRankingTable
+              title="Top 10 Most Dangerous Cities in Germany"
+              valueHeader="Crime Rate per 100,000"
+              rows={GERMANY_MOST_DANGEROUS_CITIES}
+            />
+            <GermanyCrimeRankingTable
+              title="Cities with the Most Immigrants"
+              valueHeader="Foreign Nationals"
+              rows={GERMANY_CITIES_MOST_IMMIGRANTS}
+            />
+            <GermanyCrimeRankingTable
+              title="Cities with the Highest % of Immigrants"
+              valueHeader="% Migration Background"
+              rows={GERMANY_CITIES_HIGHEST_MIGRANT_SHARE}
+            />
+          </div>
+        </>
+      ) : null}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {iso3?.toUpperCase() === 'DEU'
           ? GERMANY_CRIME_2024_STATS.map((item) => <GermanyCrime2024StatCard key={item.id} item={item} />)
